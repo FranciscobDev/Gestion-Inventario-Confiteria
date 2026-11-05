@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.usuarios',
+    'apps.gestion',
 ]
 
 MIDDLEWARE = [
@@ -51,16 +53,21 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+import os 
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                #no se q context processors deberiamos agregar para la app, hay que pensar en eso
+                #los context processors son cm inyecciones globales, osea x ejemplo en la app del profe se usa para el carrito
+                #pq asi el carrito estaba disponible en TODAS las vistas. (creo q era asi)
             ],
         },
     },
@@ -72,12 +79,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
+## Acá !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+### leer readme chavalines ejjejje
+### saludos desde loquendo city calle bikini bottom 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'default': {
+        'ENGINE': 'django.db.backends.mysql', 
+        'NAME': 'ing_software',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        }
 }
+#ok chavales si ola sixseven
 
 
 # Password validation
@@ -98,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+AUTH_USER_MODEL = 'usuarios.User'
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
@@ -114,7 +129,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 
 # Email
@@ -125,3 +141,6 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+LOGIN_REDIRECT_URL = '/gestion/home'#url a la q se va el cerote q inicie sesión
+LOGOUT_REDIRECT_URL = '/usuarios/login/'#url a la q se va el cerote q cierre sesión

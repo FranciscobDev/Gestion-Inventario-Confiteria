@@ -1,0 +1,12 @@
+<!-- por qué tan específico?-->
+
+<!-- pasa q Don Jango tiene una ruta x defecto para la interfaz d login. Esta es la carpeta de templates/registration-->
+
+
+<h2>Inicio de sesión con Don Juango</h2>
+
+<form method="post"> <!-- esa línea dice q la info del user se envia cn el método post, q es seguro pq viaja resguardado en el cuerpo d la petición -->
+  {% csrf_token %}<!-- Django genera un token único y que no se puede ver/descifrar, asi se evitan ataques de falsificacion de peticiones -->
+  {{ form.as_p }} <!-- esto nmas es para renderizar las cosas definidas del formulario como etiquetas de parrafo d html.. cuek-->
+  <button type="submit">Entrar</button>
+</form>
