@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from django.contrib.messages import constants as messages_constants
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +27,7 @@ SECRET_KEY = 'django-insecure-@u(zbibenv3-w@mfyop@(bk#15=z51w0rg)x_=2c%egz=r3k4q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -53,8 +55,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
-import os 
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -65,9 +65,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                #no se q context processors deberiamos agregar para la app, hay que pensar en eso
-                #los context processors son cm inyecciones globales, osea x ejemplo en la app del profe se usa para el carrito
-                #pq asi el carrito estaba disponible en TODAS las vistas. (creo q era asi)
             ],
         },
     },
@@ -79,20 +76,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-## Acá !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-### leer readme chavalines ejjejje
-### saludos desde loquendo city calle bikini bottom 
 DATABASES = {
-        'default': {
+    'default': {
         'ENGINE': 'django.db.backends.mysql', 
         'NAME': 'ing_software',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '3306',
-        }
+    }
 }
-#ok chavales si ola sixseven
 
 
 # Password validation
@@ -114,12 +107,13 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'usuarios.User'
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-cl'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 
@@ -142,5 +136,16 @@ MAILERS = {
     },
 }
 
-LOGIN_REDIRECT_URL = '/gestion/home'#url a la q se va el cerote q inicie sesión
-LOGOUT_REDIRECT_URL = '/usuarios/login/'#url a la q se va el cerote q cierre sesión
+# Configuración de URLs de autenticación
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = '/gestion/'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Mapeo de tags de mensajes flash a clases de Bootstrap 5
+MESSAGE_TAGS = {
+    messages_constants.DEBUG: 'secondary',
+    messages_constants.INFO: 'info',
+    messages_constants.SUCCESS: 'success',
+    messages_constants.WARNING: 'warning',
+    messages_constants.ERROR: 'danger',
+}
