@@ -1,0 +1,254 @@
+/* ==========================================================================
+   CONFITERÍA / SISTEMA DE GESTIÓN DE INVENTARIO
+   Diseño inspirado en ProyectoBackend-ev3 con soporte Bootstrap 5 y Bootstrap Icons
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. VARIABLES DE TEMA Y PALETA DE COLORES
+   -------------------------------------------------------------------------- */
+:root {
+  /* Color Principal (Tono Burdeos / Chocolate Confitero Moderno) */
+  --admin-primary: #a81c3a;
+  --admin-primary-hover: #89132d;
+  --admin-primary-active: #6e0c22;
+  --admin-primary-subtle: #fdf2f4;
+  --admin-primary-border: rgba(168, 28, 58, 0.25);
+
+  /* Neutros Oscuros */
+  --admin-dark: #1a1a1a;
+  --admin-dark-secondary: #24292e;
+  --admin-header-bg: #1e1e24;
+  --admin-card-dark: #2a2a32;
+
+  /* Neutros Claros */
+  --admin-body-bg: #f4f6f9;
+  --admin-surface: #ffffff;
+  --admin-surface-secondary: #f8fafc;
+  --admin-border: #e2e8f0;
+  --admin-border-subtle: #edf2f7;
+
+  /* Tipografía */
+  --admin-text-main: #1e293b;
+  --admin-text-muted: #64748b;
+  --admin-text-light: #94a3b8;
+
+  /* Estados */
+  --admin-success: #10b981;
+  --admin-warning: #f59e0b;
+  --admin-danger: #ef4444;
+  --admin-info: #0ea5e9;
+
+  /* Sombras */
+  --admin-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --admin-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --admin-shadow-lg: 0 10px 18px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+
+  /* Bordes y Transiciones */
+  --admin-radius-sm: 6px;
+  --admin-radius-md: 10px;
+  --admin-radius-lg: 16px;
+  --admin-transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   2. ESTILOS GLOBALES
+   -------------------------------------------------------------------------- */
+body {
+  font-family: var(--admin-font);
+  background-color: var(--admin-body-bg);
+  color: var(--admin-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--admin-primary);
+  text-decoration: none;
+  transition: var(--admin-transition);
+}
+
+a:hover {
+  color: var(--admin-primary-hover);
+}
+
+/* --------------------------------------------------------------------------
+   3. BARRA DE NAVEGACIÓN
+   -------------------------------------------------------------------------- */
+.admin-navbar {
+  background-color: var(--admin-header-bg);
+  padding: 0.85rem 0;
+  border-bottom: 3px solid var(--admin-primary);
+  box-shadow: var(--admin-shadow-md);
+}
+
+.admin-navbar .navbar-brand {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-navbar .nav-link {
+  color: #cbd5e1;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--admin-radius-sm);
+  transition: var(--admin-transition);
+}
+
+.admin-navbar .nav-link:hover,
+.admin-navbar .nav-link.active {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.admin-user-badge {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* --------------------------------------------------------------------------
+   4. BOTONES
+   -------------------------------------------------------------------------- */
+.btn-admin {
+  background-color: var(--admin-primary);
+  color: #ffffff !important;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--admin-radius-sm);
+  transition: var(--admin-transition);
+}
+
+.btn-admin:hover {
+  background-color: var(--admin-primary-hover);
+  box-shadow: 0 4px 10px rgba(168, 28, 58, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-admin:active {
+  background-color: var(--admin-primary-active);
+  transform: translateY(0);
+}
+
+.btn-admin-outline {
+  background-color: transparent;
+  color: var(--admin-primary) !important;
+  border: 2px solid var(--admin-primary);
+  font-weight: 600;
+  border-radius: var(--admin-radius-sm);
+  transition: var(--admin-transition);
+}
+
+.btn-admin-outline:hover {
+  background-color: var(--admin-primary);
+  color: #ffffff !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. TARJETA DE AUTENTICACIÓN (LOGIN)
+   -------------------------------------------------------------------------- */
+.auth-wrapper {
+  min-height: 75vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--admin-surface);
+  border-radius: var(--admin-radius-lg);
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow-lg);
+  overflow: hidden;
+}
+
+.auth-card-header {
+  background: var(--admin-dark);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: #ffffff;
+  border-bottom: 3px solid var(--admin-primary);
+}
+
+.auth-card-body {
+  padding: 2rem;
+}
+
+.auth-card .input-group-text {
+  background-color: var(--admin-surface-secondary);
+  border-color: var(--admin-border);
+  color: var(--admin-text-muted);
+}
+
+.auth-card .form-control {
+  border-color: var(--admin-border);
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+}
+
+.auth-card .form-control:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px var(--admin-primary-border);
+}
+
+/* --------------------------------------------------------------------------
+   6. TARJETAS DEL DASHBOARD / INVENTARIO
+   -------------------------------------------------------------------------- */
+.admin-card {
+  background: var(--admin-surface);
+  border-radius: var(--admin-radius-md);
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow-sm);
+  overflow: hidden;
+  transition: var(--admin-transition);
+}
+
+.admin-card:hover {
+  box-shadow: var(--admin-shadow-md);
+}
+
+.admin-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-card-body {
+  padding: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   7. FOOTER
+   -------------------------------------------------------------------------- */
+.admin-footer {
+  background-color: var(--admin-header-bg);
+  color: #94a3b8;
+  padding: 2rem 0 1.25rem;
+  margin-top: auto;
+  border-top: 1px solid #334155;
+  font-size: 0.9rem;
+}
+
+.admin-footer a {
+  color: #cbd5e1;
+}
+
+.admin-footer a:hover {
+  color: #ffffff;
+}
+
