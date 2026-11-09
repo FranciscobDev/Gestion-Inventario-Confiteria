@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} | Arteconfi{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+
+    <div class="mb-4">
+        <a href="{% url 'gestion:productos_lista' %}" class="text-decoration-none small">
+            <i class="bi bi-arrow-left"></i> Volver a productos
+        </a>
+        <h2 class="fw-bold mb-1 mt-2">{{ titulo }}</h2>
+        <p class="text-secondary mb-0">{{ subtitulo }}</p>
+    </div>
+
+    {% if not hay_categorias %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        Primero debes crear al menos una categoría en
+        <a href="/admin/gestion/categoria/add/" target="_blank">el panel de Django</a>.
+    </div>
+    {% endif %}
+
+    <div class="admin-card">
+        <div class="admin-card-body">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">
+                        {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+                    {% for field in form %}
+                    <div class="{% if field.name == 'descripcion' or field.name == 'imagen' %}col-12{% else %}col-md-6{% endif %}">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                            {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <a href="{% url 'gestion:productos_lista' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success" {% if not hay_categorias %}disabled{% endif %}>
+                        <i class="bi bi-check-circle me-1"></i> Guardar producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
