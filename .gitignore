@@ -1,8 +1,26 @@
-.venv
-*sqlite3
-__pycache__
-node_modules
-frontend/dist
-frontend/.vite
+# Entorno y secretos
 .env
+.env.*
+!.env.example
+
+# Python / Django
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*sqlite3
+
+# Node / Vite / React
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Logs y temporales
 *.log
+*.tmp
+
+# Sistema Operativo e IDE
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

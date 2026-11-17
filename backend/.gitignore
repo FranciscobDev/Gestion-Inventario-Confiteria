@@ -1,0 +1,23 @@
+# Entornos virtuales y Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Variables de entorno
+.env
+.env.local
+!.env.example
+
+# Django local / multimedia / respaldos
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+backups/
+*.log
