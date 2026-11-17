@@ -12,6 +12,9 @@ class Encargo(models.Model):
 
     cliente_nombre = models.CharField(max_length=120)
     cliente_telefono = models.CharField(max_length=30)
+    cliente = models.ForeignKey(
+    'clientes.Cliente', null=True, blank=True,
+    on_delete=models.SET_NULL, related_name='encargos',)
     fecha_entrega = models.DateField()
     hora_entrega = models.CharField(max_length=10, default='16:00')
     estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.PENDIENTE)

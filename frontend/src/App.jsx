@@ -11,8 +11,9 @@ import EncargosPage from './pages/EncargosPage';
 import ProveedoresPage from './pages/ProveedoresPage';
 import ReportesPage from './pages/ReportesPage';
 import RespaldosConfigPage from './pages/RespaldosConfigPage';
+import ClientePortal from './clientes/ClientePortal';
 
-function AppRoutes() {
+function OwnerRoutes() {
   const { user } = useApp();
 
   if (!user) {
@@ -37,6 +38,15 @@ function AppRoutes() {
         <Route path="sistema" element={<RespaldosConfigPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/cliente/*" element={<ClientePortal />} />
+      <Route path="*" element={<OwnerRoutes />} />
     </Routes>
   );
 }

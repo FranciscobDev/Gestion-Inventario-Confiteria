@@ -18,6 +18,13 @@ class EncargoViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         encargo = serializer.save()
+        from apps.clientes.models import Cliente
+        from apps.clientes.utils import normalizar_telefono
+        ...
+        cliente = Cliente.objects.filter(telefono=normalizar_telefono(encargo.cliente_telefono)).first()
+        if cliente:
+            encargo.cliente = cliente
+            encargo.save(update_fields=['cliente'])
         for item in encargo.items.all():
             stock_total = sincronizar_stock_producto(item.producto)
             proximo_lote = (
