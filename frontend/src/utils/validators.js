@@ -50,6 +50,23 @@ export function onlyRutChars(value) {
 }
 
 /**
+ * Valida requisitos de seguridad para contraseñas de registro:
+ * Mínimo 8 caracteres, al menos una mayúscula y al menos un símbolo.
+ */
+export function validatePasswordStrength(pwd) {
+  if (!pwd || pwd.length < 8) {
+    return { ok: false, error: 'La contraseña debe tener al menos 8 caracteres.' };
+  }
+  if (!/[A-Z]/.test(pwd)) {
+    return { ok: false, error: 'La contraseña debe incluir al menos una letra mayúscula.' };
+  }
+  if (!/[^A-Za-z0-9]/.test(pwd)) {
+    return { ok: false, error: 'La contraseña debe incluir al menos un símbolo (ej: !@#$%&*).' };
+  }
+  return { ok: true };
+}
+
+/**
  * Props reutilizables para un input estrictamente entero.
  */
 export function integerInputProps(value, onValidChange, { min = 0 } = {}) {

@@ -9,6 +9,15 @@ export function getClienteToken() {
   }
 }
 
+export function getClienteDatos() {
+  try {
+    const raw = localStorage.getItem(DATOS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function setClienteSesion(token, cliente) {
   try {
     localStorage.setItem(TOKEN_KEY, token);
@@ -58,6 +67,7 @@ export const clienteApi = {
     request('/api/clientes/login/', { method: 'POST', body: { telefono, password }, auth: false }),
   logout: () => request('/api/clientes/logout/', { method: 'POST' }),
   me: () => request('/api/clientes/me/'),
+  tiendaPublica: () => request('/api/clientes/tienda/', { auth: false }),
   encargos: () => request('/api/clientes/encargos/'),
   cancelarEncargo: (id) => request(`/api/clientes/encargos/${id}/cancelar/`, { method: 'POST' }),
     catalogo: () => request('/api/clientes/catalogo/'),

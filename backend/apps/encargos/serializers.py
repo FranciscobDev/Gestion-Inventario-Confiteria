@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import DetalleEncargo, Encargo, HistorialEncargo
 
@@ -28,12 +29,16 @@ class EncargoSerializer(serializers.ModelSerializer):
             'hora_entrega',
             'estado',
             'notas',
+            'creado_en',
             'items',
             'historial',
         ]
+        read_only_fields = ['creado_en']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
+        if not validated_data.get('hora_entrega'):
+            validated_data['hora_entrega'] = timezone.localtime().strftime('%H:%M')
         encargo = Encargo.objects.create(**validated_data)
         for item in items_data:
             DetalleEncargo.objects.create(encargo=encargo, **item)

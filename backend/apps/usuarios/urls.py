@@ -5,6 +5,7 @@ app_name = 'usuarios'
 
 urlpatterns = [
     path('login/', views.LoginAPIView.as_view(), name='login'),
+    path('login-unificado/', views.LoginUnificadoAPIView.as_view(), name='login_unificado'),
     path('logout/', views.LogoutAPIView.as_view(), name='logout'),
     path('status/', views.AuthStatusAPIView.as_view(), name='status'),
     path('verificar-password/', views.VerifyPasswordAPIView.as_view(), name='verify_password'),

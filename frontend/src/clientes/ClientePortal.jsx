@@ -1,22 +1,17 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { getClienteToken } from './clienteApi';
-import {
-  ClienteLoginPage,
-  ClienteRegistroPage,
-  ClientePanelPage,
-  ClienteNuevoEncargoPage,
-} from './ClientePages';
+import { ClientePanelPage } from './ClientePages';
 
 function RequiereCliente({ children }) {
-  return getClienteToken() ? children : <Navigate to="/cliente/login" replace />;
+  return getClienteToken() ? children : <Navigate to="/login" replace />;
 }
 
 export default function ClientePortal() {
   return (
     <Routes>
-      <Route path="login" element={<ClienteLoginPage />} />
-      <Route path="registro" element={<ClienteRegistroPage />} />
+      <Route path="login" element={<Navigate to="/login" replace />} />
+      <Route path="registro" element={<Navigate to="/login?tab=registro" replace />} />
       <Route
         index
         element={
@@ -25,14 +20,7 @@ export default function ClientePortal() {
           </RequiereCliente>
         }
       />
-      <Route
-        path="nuevo"
-        element={
-          <RequiereCliente>
-            <ClienteNuevoEncargoPage />
-          </RequiereCliente>
-        }
-      />
+      <Route path="nuevo" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/cliente" replace />} />
     </Routes>
   );

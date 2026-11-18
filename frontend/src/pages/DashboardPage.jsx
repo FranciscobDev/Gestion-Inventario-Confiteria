@@ -73,10 +73,10 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="header-actions">
-          <Link to="/salidas" className="btn btn-primary">
+          <Link to="/admin-panel/salidas" className="btn btn-primary">
             <ShoppingCart size={16} /> Registrar Salida Stock (FEFO)
           </Link>
-          <Link to="/finanzas" className="btn btn-dark">
+          <Link to="/admin-panel/finanzas" className="btn btn-dark">
             <Wallet size={16} /> Registrar Venta en Caja
           </Link>
         </div>
@@ -90,7 +90,7 @@ export default function DashboardPage() {
               <strong>Posible descuadre hoy:</strong> Tienes {ventasHoy.length} venta(s) registrada(s)
               en finanzas y {salidasHoy} salida(s) física(s) descontada(s) del stock.
             </span>
-            <Link to="/reportes" className="btn btn-sm btn-outline">
+            <Link to="/admin-panel/reportes" className="btn btn-sm btn-outline">
               Revisar Cuadre Diario <ArrowRight size={14} />
             </Link>
           </div>
@@ -154,7 +154,7 @@ export default function DashboardPage() {
               <Clock size={17} style={{ color: 'var(--danger)' }} />
               Lotes Próximos a Vencer y Vencidos (FEFO)
             </h2>
-            <Link to="/inventario?tab=lotes" className="btn btn-outline btn-sm">
+            <Link to="/admin-panel/inventario?tab=lotes" className="btn btn-outline btn-sm">
               Gestionar lotes
             </Link>
           </div>
@@ -203,7 +203,7 @@ export default function DashboardPage() {
                 <Wallet size={17} style={{ color: 'var(--success)' }} />
                 Ingresos Diarios por Medio de Pago
               </h2>
-              <Link to="/finanzas" className="btn btn-outline btn-sm">
+              <Link to="/admin-panel/finanzas" className="btn btn-outline btn-sm">
                 Ir a Caja
               </Link>
             </div>
@@ -218,7 +218,7 @@ export default function DashboardPage() {
                 <AlertTriangle size={17} style={{ color: 'var(--warning)' }} />
                 Productos por Agotar
               </h2>
-              <Link to="/proveedores?tab=sugerencias" className="btn btn-outline btn-sm">
+              <Link to="/admin-panel/proveedores?tab=sugerencias" className="btn btn-outline btn-sm">
                 Sugerencia compra
               </Link>
             </div>
@@ -267,7 +267,7 @@ export default function DashboardPage() {
             <CalendarClock size={17} style={{ color: 'var(--info)' }} />
             Agenda de Encargos Próximos y Atrasados
           </h2>
-          <Link to="/encargos" className="btn btn-outline btn-sm">
+          <Link to="/admin-panel/encargos" className="btn btn-outline btn-sm">
             Ir a Encargos
           </Link>
         </div>
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                   <tr>
                     <th>#</th>
                     <th>Cliente</th>
-                    <th>Entrega Pactada</th>
+                    <th>Retiro Programado</th>
                     <th>Productos</th>
                     <th>Estado</th>
                   </tr>
@@ -299,11 +299,14 @@ export default function DashboardPage() {
                           <div className="small text-muted">{o.clienteTelefono}</div>
                         </td>
                         <td>
-                          <span className={atrasado ? 'text-danger fw-bold' : esHoy ? 'text-warning fw-bold' : ''}>
-                            {o.fechaEntrega} {o.horaEntrega}
+                          <span className={atrasado ? 'text-danger fw-bold' : esHoy ? 'text-warning fw-bold' : 'fw-bold'}>
+                            {o.fechaEntrega}
                           </span>
                           {atrasado && <span className="badge badge-danger" style={{ marginLeft: 6 }}>Atrasado</span>}
                           {esHoy && <span className="badge badge-warning" style={{ marginLeft: 6 }}>Hoy</span>}
+                          <div className="small text-muted" style={{ fontSize: '0.74rem' }}>
+                            Reg: {o.horaEntrega ? `${o.horaEntrega} hrs` : '-'}
+                          </div>
                         </td>
                         <td className="small">{o.items.length} ítem(s) reservados</td>
                         <td>

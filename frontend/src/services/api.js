@@ -117,6 +117,7 @@ export function mapBootstrapData(raw) {
       clienteTelefono: o.cliente_telefono,
       fechaEntrega: o.fecha_entrega,
       horaEntrega: o.hora_entrega,
+      creadoEn: o.creado_en ? fmtDt(o.creado_en) : (o.hora_entrega ? `${o.fecha_entrega} ${o.hora_entrega}` : null),
       estado: o.estado,
       notas: o.notas || '',
       items: (o.items || []).map((it) => ({
@@ -188,6 +189,8 @@ export const api = {
   // Usuarios & Seguridad
   login: (username, password) =>
     request('/api/usuarios/login/', { method: 'POST', body: { username, password }, auth: false }),
+  loginUnified: (identificador, password) =>
+    request('/api/usuarios/login-unificado/', { method: 'POST', body: { identificador, password }, auth: false }),
   logout: () => request('/api/usuarios/logout/', { method: 'POST' }),
   authStatus: () => request('/api/usuarios/status/'),
   verifyPassword: (password) =>

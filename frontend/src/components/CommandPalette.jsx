@@ -15,13 +15,14 @@ export default function CommandPalette({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const quickActions = [
-    { label: 'Ir a Salidas de Stock (FEFO)', to: '/salidas', icon: ShoppingCart },
-    { label: 'Ir a Registrar Venta en Caja (Finanzas)', to: '/finanzas', icon: Wallet },
-    { label: 'Ir a Inventario, Lotes y Kardex', to: '/inventario', icon: Boxes },
-    { label: 'Ir a Lotes Próximos a Vencer', to: '/inventario?tab=lotes', icon: Boxes },
-    { label: 'Ir a Encargos y Reservas', to: '/encargos', icon: CalendarClock },
-    { label: 'Ir a Proveedores y Sugerencias de Compra', to: '/proveedores?tab=sugerencias', icon: Truck },
-    { label: 'Ir a Reportes y Detector de Descuadres', to: '/reportes', icon: BarChart3 },
+    { label: 'Ir a Tienda Pública', to: '/', icon: Boxes },
+    { label: 'Ir a Salidas de Stock (FEFO)', to: '/admin-panel/salidas', icon: ShoppingCart },
+    { label: 'Ir a Registrar Venta en Caja (Finanzas)', to: '/admin-panel/finanzas', icon: Wallet },
+    { label: 'Ir a Inventario, Lotes y Kardex', to: '/admin-panel/inventario', icon: Boxes },
+    { label: 'Ir a Lotes Próximos a Vencer', to: '/admin-panel/inventario?tab=lotes', icon: Boxes },
+    { label: 'Ir a Encargos y Reservas', to: '/admin-panel/encargos', icon: CalendarClock },
+    { label: 'Ir a Proveedores y Sugerencias de Compra', to: '/admin-panel/proveedores?tab=sugerencias', icon: Truck },
+    { label: 'Ir a Reportes y Detector de Descuadres', to: '/admin-panel/reportes', icon: BarChart3 },
   ];
 
   const q = query.trim().toLowerCase();
@@ -29,13 +30,13 @@ export default function CommandPalette({ isOpen, onClose }) {
   const matchedActions = quickActions.filter((a) => a.label.toLowerCase().includes(q));
   const matchedProducts = q
     ? products
-        .filter((p) => p.activo && (p.nombre.toLowerCase().includes(q) || (p.codigoBarras || '').includes(q)))
-        .slice(0, 5)
+      .filter((p) => p.activo && (p.nombre.toLowerCase().includes(q) || (p.codigoBarras || '').includes(q)))
+      .slice(0, 5)
     : [];
   const matchedOrders = q
     ? orders
-        .filter((o) => o.clienteNombre.toLowerCase().includes(q) || String(o.id) === q)
-        .slice(0, 3)
+      .filter((o) => o.clienteNombre.toLowerCase().includes(q) || String(o.id) === q)
+      .slice(0, 3)
     : [];
 
   const go = (path) => {
@@ -73,7 +74,7 @@ export default function CommandPalette({ isOpen, onClose }) {
               {matchedProducts.map((p) => {
                 const info = getProductStockInfo(p.id);
                 return (
-                  <button key={p.id} className="cmd-item" onClick={() => go('/inventario')}>
+                  <button key={p.id} className="cmd-item" onClick={() => go('/admin-panel/inventario')}>
                     <div>
                       <div className="fw-bold">{p.nombre}</div>
                       <div className="small text-muted">
@@ -93,7 +94,7 @@ export default function CommandPalette({ isOpen, onClose }) {
                 ENCARGOS
               </div>
               {matchedOrders.map((o) => (
-                <button key={o.id} className="cmd-item" onClick={() => go('/encargos')}>
+                <button key={o.id} className="cmd-item" onClick={() => go('/admin-panel/encargos')}>
                   <div>
                     <div className="fw-bold">#{o.id} — {o.clienteNombre}</div>
                     <div className="small text-muted">

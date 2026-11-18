@@ -61,6 +61,99 @@ class LoginAPIView(APIView):
         })
 
 
+class LoginUnificadoAPIView(APIView):
+    """
+    Login unificado para Dueño (username) y Cliente (teléfono de 9 dígitos).
+    Mantiene tokens y permisos aislados según el tipo de cuenta.
+    """
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from apps.clientes.models import Cliente, TokenCliente
+        from apps.clientes.utils import normalizar_telefono
+
+        identificador = (
+            request.data.get('identificador')
+            or request.data.get('username')
+            or request.data.get('telefono')
+            or ''
+        ).strip()
+        password = request.data.get('password') or ''
+        ahora = timezone.now()
+
+        # 1. Intentar autenticación como Dueño / Admin
+        admin_candidate = User.objects.filter(username=identificador).first()
+        if admin_candidate and (admin_candidate.is_staff or admin_candidate.is_superuser):
+            cfg = ConfiguracionNegocio.get_solo()
+            if cfg.locked_until and ahora < cfg.locked_until:
+                return Response(
+                    {'detail': 'Cuenta bloqueada temporalmente (5 min) tras 5 intentos fallidos.'},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+            user = authenticate(request, username=identificador, password=password)
+            if not user:
+                cfg.failed_attempts += 1
+                if cfg.failed_attempts >= 5:
+                    cfg.locked_until = ahora + timedelta(minutes=5)
+                cfg.save()
+                return Response(
+                    {'detail': 'Usuario/teléfono o contraseña incorrectos.'},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            cfg.failed_attempts = 0
+            cfg.locked_until = None
+            cfg.save()
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({
+                'tipo': 'dueno',
+                'token': token.key,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'role': 'Dueño' if user.is_superuser else 'Admin',
+                },
+                'config': ConfiguracionNegocioSerializer(cfg).data,
+            })
+
+        # 2. Intentar autenticación como Cliente (teléfono 9 dígitos)
+        tel = normalizar_telefono(identificador)
+        cliente = Cliente.objects.filter(telefono=tel).first() if len(tel) == 9 else None
+        if cliente and cliente.locked_until and ahora < cliente.locked_until:
+            return Response(
+                {'detail': 'Cuenta bloqueada temporalmente. Intenta en unos minutos.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        if cliente and cliente.activo and cliente.check_password(password):
+            cliente.failed_attempts = 0
+            cliente.locked_until = None
+            cliente.save(update_fields=['failed_attempts', 'locked_until'])
+            tok, _ = TokenCliente.objects.get_or_create(cliente=cliente)
+            return Response({
+                'tipo': 'cliente',
+                'token': tok.key,
+                'cliente': {
+                    'id': cliente.id,
+                    'nombre': cliente.nombre,
+                    'telefono': cliente.telefono,
+                },
+            })
+
+        if cliente:
+            cliente.failed_attempts += 1
+            if cliente.failed_attempts >= 5:
+                cliente.locked_until = ahora + timedelta(minutes=5)
+                cliente.failed_attempts = 0
+            cliente.save(update_fields=['failed_attempts', 'locked_until'])
+
+        return Response(
+            {'detail': 'Usuario/teléfono o contraseña incorrectos.'},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+
 class LogoutAPIView(APIView):
     permission_classes = [IsOwnerOrAdmin]
 
