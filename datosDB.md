@@ -7,6 +7,7 @@
 -- ARTECONFI - Carga Inicial de Datos (PostgreSQL)
 -- ============================================================================
 
+-- Si hubo un error previo en tu consola o pgAdmin, ROLLBACK limpia la sesión:
 ROLLBACK;
 BEGIN;
 
@@ -30,6 +31,10 @@ INSERT INTO usuarios_user (
     TRUE,
     NOW()
 ) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO authtoken_token (key, created, user_id) VALUES
+    ('9482a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7', NOW(), 1)
+ON CONFLICT (user_id) DO NOTHING;
 
 INSERT INTO configuracion_negocio (
     id, amber_days, red_days, inactivity_minutes,
@@ -130,17 +135,29 @@ INSERT INTO combo_items (id, combo_id, producto_id, cantidad) VALUES
 ON CONFLICT DO NOTHING;
 
 -- ----------------------------------------------------------------------------
--- 6. ENCARGOS Y RESERVAS
+-- 6. CLIENTES (PORTAL), ENCARGOS Y RESERVAS
 -- ----------------------------------------------------------------------------
 
+INSERT INTO clientes (
+    id, telefono, nombre, password, activo, failed_attempts, locked_until, creado_en
+) VALUES (
+    1, '912345678', 'Camila Rojas',
+    'pbkdf2_sha256$1500000$CG84jO0zXxmFRN3Jiu8T00$ELszjO9xI9o6FfdJ/1lAcYNMSOANW0xIfNfxRREhRho=',
+    TRUE, 0, NULL, NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO tokens_cliente (key, cliente_id, created) VALUES
+    ('c1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0', 1, NOW())
+ON CONFLICT (cliente_id) DO NOTHING;
+
 INSERT INTO encargos (
-    id, cliente_nombre, cliente_telefono, fecha_entrega,
+    id, cliente_id, cliente_nombre, cliente_telefono, fecha_entrega,
     hora_entrega, estado, notas, creado_en
 ) VALUES
-    (1, 'María José Fuentes', '+56 9 6543 2109', CURRENT_DATE, '17:30', 'En preparación', 'Caja regalo cumpleaños infantil', NOW() - INTERVAL '2 days'),
-    (2, 'Colegio San Gabriel (Centro Padres)', '+56 9 8812 3400', CURRENT_DATE - INTERVAL '1 day', '12:00', 'Pendiente', 'Bolsitas para convivencia', NOW() - INTERVAL '3 days'),
-    (3, 'Javier Contreras', '+56 9 7701 9981', CURRENT_DATE + INTERVAL '3 days', '15:00', 'Pendiente', 'Mesa dulce bautizo', NOW())
-ON CONFLICT DO NOTHING;
+    (1, 1, 'Camila Rojas', '912345678', CURRENT_DATE, '17:30', 'En preparación', 'Caja regalo cumpleaños infantil', NOW() - INTERVAL '2 days'),
+    (2, NULL, 'Colegio San Gabriel (Centro Padres)', '+56 9 8812 3400', CURRENT_DATE - INTERVAL '1 day', '12:00', 'Pendiente', 'Bolsitas para convivencia', NOW() - INTERVAL '3 days'),
+    (3, NULL, 'Javier Contreras', '+56 9 7701 9981', CURRENT_DATE + INTERVAL '3 days', '15:00', 'Pendiente', 'Mesa dulce bautizo', NOW())
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO detalle_encargos (id, encargo_id, producto_id, cantidad) VALUES
     (1, 1, 1, 2),
@@ -232,6 +249,7 @@ SELECT setval(pg_get_serial_sequence('ventas_finanzas', 'id'), COALESCE((SELECT 
 SELECT setval(pg_get_serial_sequence('ordenes_compra', 'id'), COALESCE((SELECT MAX(id) FROM ordenes_compra), 1));
 SELECT setval(pg_get_serial_sequence('detalle_ordenes_compra', 'id'), COALESCE((SELECT MAX(id) FROM detalle_ordenes_compra), 1));
 SELECT setval(pg_get_serial_sequence('devoluciones_proveedor', 'id'), COALESCE((SELECT MAX(id) FROM devoluciones_proveedor), 1));
+SELECT setval(pg_get_serial_sequence('clientes', 'id'), COALESCE((SELECT MAX(id) FROM clientes), 1));
 SELECT setval(pg_get_serial_sequence('registros_respaldo', 'id'), COALESCE((SELECT MAX(id) FROM registros_respaldo), 1));
 
 COMMIT;

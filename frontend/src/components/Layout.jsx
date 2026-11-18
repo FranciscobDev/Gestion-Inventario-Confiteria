@@ -20,6 +20,7 @@ import {
   Search,
   Sun,
   Moon,
+  Store,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import CommandPalette from './CommandPalette';
@@ -57,11 +58,11 @@ export default function Layout() {
 
   const navItems = [
     { section: 'Operación Diaria' },
-    { to: '/', label: 'Panel de Inicio', icon: LayoutDashboard, end: true },
-    { to: '/salidas', label: 'Salidas Stock (FEFO)', icon: ShoppingCart },
-    { to: '/finanzas', label: 'Finanzas y Caja', icon: Wallet },
+    { to: '/admin-panel', label: 'Panel de Inicio', icon: LayoutDashboard, end: true },
+    { to: '/admin-panel/salidas', label: 'Salidas Stock (FEFO)', icon: ShoppingCart },
+    { to: '/admin-panel/finanzas', label: 'Finanzas y Caja', icon: Wallet },
     {
-      to: '/encargos',
+      to: '/admin-panel/encargos',
       label: 'Encargos y Reservas',
       icon: CalendarClock,
       badge: globalAlerts.urgentOrdersCount > 0 ? globalAlerts.urgentOrdersCount : null,
@@ -69,7 +70,7 @@ export default function Layout() {
     },
     { section: 'Control y Catálogo' },
     {
-      to: '/inventario',
+      to: '/admin-panel/inventario',
       label: 'Inventario y Lotes',
       icon: Boxes,
       badge:
@@ -78,10 +79,12 @@ export default function Layout() {
           : null,
       alert: true,
     },
-    { to: '/proveedores', label: 'Proveedores y Compras', icon: Truck },
+    { to: '/admin-panel/proveedores', label: 'Proveedores y Compras', icon: Truck },
     { section: 'Análisis y Sistema' },
-    { to: '/reportes', label: 'Reportes y Cuadre', icon: BarChart3 },
-    { to: '/sistema', label: 'Respaldos y Ajustes', icon: Settings },
+    { to: '/admin-panel/reportes', label: 'Reportes y Cuadre', icon: BarChart3 },
+    { to: '/admin-panel/sistema', label: 'Respaldos y Ajustes', icon: Settings },
+    { section: 'Vitrina' },
+    { to: '/', label: 'Ver Tienda Pública', icon: Store, end: true },
   ];
 
   return (

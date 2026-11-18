@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.db import transaction
+from django.db.models import Min, Sum
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
@@ -8,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.encargos.models import DetalleEncargo, Encargo, HistorialEncargo
-from apps.gestion.models import Lote, MovimientoInventario, Producto
+from apps.gestion.models import Combo, Lote, MovimientoInventario, Producto
 from apps.gestion.services import obtener_stock_reservado, sincronizar_stock_producto
 from .authentication import ClienteTokenAuthentication
 from .models import Cliente, TokenCliente
@@ -139,6 +140,81 @@ class CancelarEncargoView(APIView):
         return Response(EncargoClienteSerializer(enc).data)
 
 
+class TiendaPublicaView(APIView):
+    """Catálogo público de la tienda con productos habilitados (incluye agotados)."""
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        productos = Producto.objects.filter(activo=True).select_related('categoria').order_by('nombre')
+        reservas_map = {
+            row['producto_id']: row['total'] or 0
+            for row in DetalleEncargo.objects.filter(
+                encargo__estado__in=['Pendiente', 'En preparación']
+            )
+            .values('producto_id')
+            .annotate(total=Sum('cantidad'))
+        }
+        ofertas_map = {
+            row['producto_id']: row['min_oferta']
+            for row in Lote.objects.filter(stock_actual__gt=0, precio_oferta__isnull=False)
+            .values('producto_id')
+            .annotate(min_oferta=Min('precio_oferta'))
+        }
+
+        data = []
+        disp_por_prod = {}
+        for p in productos:
+            disponible = max(0, int(p.stock_actual) - int(reservas_map.get(p.id_producto, 0)))
+            disp_por_prod[p.id_producto] = disponible
+            img_url = request.build_absolute_uri(p.imagen.url) if p.imagen else ''
+            data.append({
+                'id': p.id_producto,
+                'nombre': p.nombre,
+                'descripcion': p.descripcion or '',
+                'categoria': p.categoria.nombre_categoria,
+                'precio_venta': p.precio_venta,
+                'precio_oferta': ofertas_map.get(p.id_producto),
+                'unidad_medida': p.unidad_medida,
+                'imagen': img_url,
+                'disponible': disponible,
+                'agotado': disponible <= 0,
+            })
+
+        combos_data = []
+        for c in Combo.objects.filter(activo=True).prefetch_related('componentes__producto'):
+            comps = list(c.componentes.all())
+            if not comps:
+                continue
+            precio_normal = sum(float(comp.producto.precio_venta) * comp.cantidad for comp in comps)
+            stock_combo = min(
+                disp_por_prod.get(comp.producto_id, 0) // comp.cantidad
+                for comp in comps
+            )
+            items_list = [
+                {
+                    'producto_id': comp.producto_id,
+                    'nombre': comp.producto.nombre,
+                    'cantidad': comp.cantidad,
+                }
+                for comp in comps
+            ]
+            combos_data.append({
+                'id': c.id,
+                'nombre': c.nombre,
+                'descripcion': '',
+                'precio_especial': c.precio_especial,
+                'precio_combo': c.precio_especial,
+                'precio_normal': precio_normal,
+                'ahorro': max(0, precio_normal - float(c.precio_especial)),
+                'disponible': max(0, stock_combo),
+                'items': items_list,
+                'componentes': items_list,
+            })
+
+        return Response({'productos': data, 'combos': combos_data})
+
+
 class CatalogoClienteView(APIView):
     authentication_classes = [ClienteTokenAuthentication]
     permission_classes = [IsCliente]
@@ -169,7 +245,11 @@ class NuevoEncargoClienteView(APIView):
     def post(self, request):
         cliente = request.user
         fecha_str = request.data.get('fecha_entrega')
-        hora = (request.data.get('hora_entrega') or '16:00').strip()[:10]
+        # Reutilizamos hora_entrega para almacenar la hora exacta de creación del encargo
+        hora = (
+            request.data.get('hora_entrega')
+            or timezone.localtime().strftime('%H:%M')
+        ).strip()[:10]
         notas = (request.data.get('notas') or '').strip()
         items = request.data.get('items') or []
 
@@ -199,7 +279,7 @@ class NuevoEncargoClienteView(APIView):
 
         productos = {}
         for pid, cant in pedido.items():
-            prod = Producto.objects.filter(pk=pid, activo=True).first()
+            prod = Producto.objects.select_for_update().filter(pk=pid, activo=True).first()
             if not prod:
                 return Response(
                     {'detail': 'Uno de los productos ya no está disponible.'},

@@ -83,8 +83,8 @@ export function DailyIncomeChart({ sales }) {
                   border: '1px solid var(--border)',
                 }}
               >
-                {hEfec > 0 && <div style={{ height: hEfec, background: '#0d9488' }} title={`Efectivo: ${formatCLP(r.Efectivo)}`} />}
-                {hTarj > 0 && <div style={{ height: hTarj, background: '#06b6d4' }} title={`Tarjeta: ${formatCLP(r.Tarjeta)}`} />}
+                {hEfec > 0 && <div style={{ height: hEfec, background: '#e11d48' }} title={`Efectivo: ${formatCLP(r.Efectivo)}`} />}
+                {hTarj > 0 && <div style={{ height: hTarj, background: '#f59e0b' }} title={`Tarjeta: ${formatCLP(r.Tarjeta)}`} />}
                 {hTrans > 0 && <div style={{ height: hTrans, background: '#10b981' }} title={`Transferencia: ${formatCLP(r.Transferencia)}`} />}
               </div>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -95,8 +95,8 @@ export function DailyIncomeChart({ sales }) {
         })}
       </div>
       <div className="flex-center mt-2" style={{ justifyContent: 'center', fontSize: '0.76rem', gap: '1rem' }}>
-        <span className="flex-center"><span style={{ width: 10, height: 10, borderRadius: 2, background: '#0d9488', display: 'inline-block' }} /> Efectivo</span>
-        <span className="flex-center"><span style={{ width: 10, height: 10, borderRadius: 2, background: '#06b6d4', display: 'inline-block' }} /> Tarjeta</span>
+        <span className="flex-center"><span style={{ width: 10, height: 10, borderRadius: 2, background: '#e11d48', display: 'inline-block' }} /> Efectivo</span>
+        <span className="flex-center"><span style={{ width: 10, height: 10, borderRadius: 2, background: '#f59e0b', display: 'inline-block' }} /> Tarjeta</span>
         <span className="flex-center"><span style={{ width: 10, height: 10, borderRadius: 2, background: '#10b981', display: 'inline-block' }} /> Transferencia</span>
       </div>
     </div>
@@ -108,8 +108,8 @@ export function DailyIncomeChart({ sales }) {
  */
 export function PeriodComparisonChart({ currentMetrics, previousMetrics }) {
   const items = [
-    { label: 'Ingresos', curr: currentMetrics.ingresos, prev: previousMetrics.ingresos, color: '#0d9488' },
-    { label: 'Costo Vendido', curr: currentMetrics.costos, prev: previousMetrics.costos, color: '#0891b2' },
+    { label: 'Ingresos', curr: currentMetrics.ingresos, prev: previousMetrics.ingresos, color: '#e11d48' },
+    { label: 'Costo Vendido', curr: currentMetrics.costos, prev: previousMetrics.costos, color: '#ea580c' },
     { label: 'Ganancia Bruta', curr: currentMetrics.gananciaBruta, prev: previousMetrics.gananciaBruta, color: '#10b981' },
     { label: 'Mermas', curr: currentMetrics.mermas, prev: previousMetrics.mermas, color: '#ef4444' },
   ];

@@ -394,10 +394,10 @@ export default function ReportesPage() {
                       <td className="num no-print">
                         <div className="flex-center" style={{ justifyContent: 'flex-end' }}>
                           {row.estado === 'Ventas sin salida de stock' && !row.revisado && (
-                            <Link to="/salidas" className="btn btn-primary btn-sm">Descontar Stock</Link>
+                            <Link to="/admin-panel/salidas" className="btn btn-primary btn-sm">Descontar Stock</Link>
                           )}
                           {row.estado === 'Salidas sin venta en finanzas' && !row.revisado && (
-                            <Link to="/finanzas" className="btn btn-dark btn-sm">Registrar Venta</Link>
+                            <Link to="/admin-panel/finanzas" className="btn btn-dark btn-sm">Registrar Venta</Link>
                           )}
                           {!ok && (
                             <button className="btn btn-outline btn-sm" onClick={() => markDayReviewed(row.day, 'Verificado manualmente')}>
@@ -456,9 +456,9 @@ export default function ReportesPage() {
             </div>
             <div className="modal-body">
               <div className="print-sheet">
-                <div className="flex-between" style={{ borderBottom: '2px solid #0d9488', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+                <div className="flex-between" style={{ borderBottom: '2px solid var(--primary)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
                   <div>
-                    <h2 style={{ margin: 0, color: '#0d9488' }}>Confitería Arteconfi</h2>
+                    <h2 style={{ margin: 0, color: 'var(--primary)' }}>Confitería Arteconfi</h2>
                     <div className="small" style={{ color: '#475569' }}>{reportTitles[printPreviewType]}</div>
                   </div>
                   <div style={{ textAlign: 'right', fontSize: '0.78rem', color: '#475569' }}>

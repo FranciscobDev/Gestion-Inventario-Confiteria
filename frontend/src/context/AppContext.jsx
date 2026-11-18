@@ -13,6 +13,7 @@ import {
   INITIAL_BACKUPS,
 } from '../data/mockData';
 import { api, getStoredToken, setStoredToken, mapBootstrapData } from '../services/api';
+import { setClienteSesion } from '../clientes/clienteApi';
 
 const AppContext = createContext(null);
 const STORAGE_KEY = 'arteconfi_v2_state';
@@ -160,10 +161,9 @@ export function AppProvider({ children }) {
           setUser(null);
         }
       } catch {
-        // Backend apagado -> modo local / offline con demo en localStorage
+        // Backend apagado -> modo local / offline con demo en localStorage (sin auto-login en tienda)
         if (mounted) {
           setBackendAvailable(false);
-          setUser((u) => u || { username: 'admin', role: 'Dueño (Local)' });
         }
       }
     })();
@@ -319,6 +319,33 @@ export function AppProvider({ children }) {
       return { ok: false, error: 'Demasiados intentos fallidos. Bloqueo activo por 5 minutos.' };
     }
     return { ok: false, error: 'Usuario o contraseña incorrectos.' };
+  };
+
+  const loginUnified = async (identificador, password) => {
+    if (backendAvailable && isOnline) {
+      try {
+        const res = await api.loginUnified(identificador, password);
+        if (res.tipo === 'dueno') {
+          setStoredToken(res.token);
+          setUser(res.user);
+          await syncFromBackend();
+          notify('Sesión de administrador iniciada.');
+          return { ok: true, tipo: 'dueno' };
+        }
+        if (res.tipo === 'cliente') {
+          setClienteSesion(res.token, res.cliente);
+          notify(`¡Bienvenido, ${res.cliente.nombre}!`);
+          return { ok: true, tipo: 'cliente', cliente: res.cliente };
+        }
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    }
+
+    // Fallback local si backend está apagado
+    const localRes = await login(identificador, password);
+    if (localRes.ok) return { ok: true, tipo: 'dueno' };
+    return localRes;
   };
 
   const logout = async () => {
@@ -600,14 +627,14 @@ export function AppProvider({ children }) {
           Number(updates.precioVenta) !== Number(p.precioVenta);
         const historialPrecios = priceChanged
           ? [
-              ...p.historialPrecios,
-              {
-                fecha: todayStr(),
-                precioCompra: Number(updates.precioCompra),
-                precioVenta: Number(updates.precioVenta),
-                motivo: updates.motivoCambio || 'Actualización manual en ficha',
-              },
-            ]
+            ...p.historialPrecios,
+            {
+              fecha: todayStr(),
+              precioCompra: Number(updates.precioCompra),
+              precioVenta: Number(updates.precioVenta),
+              motivo: updates.motivoCambio || 'Actualización manual en ficha',
+            },
+          ]
           : p.historialPrecios;
         return { ...p, ...updates, historialPrecios };
       })
@@ -920,13 +947,17 @@ export function AppProvider({ children }) {
 
   // --- Encargos ---
   const createOrder = async (orderData) => {
+    const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const hora = orderData.horaEntrega || horaActual;
+    const ahora = nowDateTime();
+
     if (useBackend) {
       try {
         await api.createOrder({
           cliente_nombre: orderData.clienteNombre,
           cliente_telefono: orderData.clienteTelefono,
           fecha_entrega: orderData.fechaEntrega,
-          hora_entrega: orderData.horaEntrega,
+          hora_entrega: hora,
           notas: orderData.notas || '',
           items: orderData.items.map((i) => ({ producto: i.productoId, cantidad: i.cantidad })),
         });
@@ -940,7 +971,14 @@ export function AppProvider({ children }) {
     }
     const newId = Math.max(0, ...orders.map((o) => o.id)) + 1;
     setOrders((prev) => [
-      { ...orderData, id: newId, estado: 'Pendiente', historial: [{ fecha: nowDateTime(), estado: 'Pendiente', motivo: 'Encargo agendado y stock reservado' }] },
+      {
+        ...orderData,
+        horaEntrega: hora,
+        creadoEn: ahora,
+        id: newId,
+        estado: 'Pendiente',
+        historial: [{ fecha: ahora, estado: 'Pendiente', motivo: 'Encargo agendado y stock reservado' }],
+      },
       ...prev,
     ]);
     trackOfflineQueue();
@@ -1301,6 +1339,7 @@ export function AppProvider({ children }) {
         toggleTheme,
         user,
         login,
+        loginUnified,
         logout,
         verifyOwnerPassword,
         changePassword,

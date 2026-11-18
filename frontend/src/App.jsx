@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import Layout from './components/Layout';
+import TiendaPage from './pages/TiendaPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import InventarioPage from './pages/InventarioPage';
@@ -17,12 +18,7 @@ function OwnerRoutes() {
   const { user } = useApp();
 
   if (!user) {
-    return (
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -37,7 +33,7 @@ function OwnerRoutes() {
         <Route path="reportes" element={<ReportesPage />} />
         <Route path="sistema" element={<RespaldosConfigPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/admin-panel" replace />} />
     </Routes>
   );
 }
@@ -45,8 +41,11 @@ function OwnerRoutes() {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<TiendaPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin-panel/*" element={<OwnerRoutes />} />
       <Route path="/cliente/*" element={<ClientePortal />} />
-      <Route path="*" element={<OwnerRoutes />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

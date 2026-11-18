@@ -534,7 +534,7 @@ export default function InventarioPage() {
                             <div className="flex-center" style={{ justifyContent: 'flex-end' }}>
                               <button
                                 className="btn btn-outline btn-sm"
-                                onClick={() => navigate(`/proveedores?tab=devoluciones&productoId=${l.productoId}&lotId=${l.id}`)}
+                                onClick={() => navigate(`/admin-panel/proveedores?tab=devoluciones&productoId=${l.productoId}&lotId=${l.id}`)}
                               >
                                 <Undo2 size={14} /> Devolver Proveedor
                               </button>
@@ -1036,74 +1036,74 @@ export default function InventarioPage() {
         const maxMerma = selectedMermaLot?.stockActual || 0;
         const mermaExcede = Number(mermaForm.cantidad || 0) > maxMerma;
         return (
-        <div className="modal-backdrop">
-          <div className="modal-dialog">
-            <div className="modal-header">
-              <h3 className="modal-title">Registrar Merma / Producto Dañado</h3>
-            </div>
-            <form onSubmit={handleMermaSubmit}>
-              <div className="modal-body">
-                {mermaExcede && (
-                  <div className="alert-box danger mb-3">
-                    <AlertTriangle size={16} />
-                    <span>Stock insuficiente en este lote: solo hay {maxMerma} unidades disponibles.</span>
-                  </div>
-                )}
-                <div className="form-grid">
-                  <div className="form-group full">
-                    <label className="form-label">Producto</label>
-                    <select
-                      className="form-control"
-                      value={mermaForm.productoId}
-                      onChange={(e) => {
-                        const pid = Number(e.target.value);
-                        const firstLot = lots.find((l) => l.productoId === pid && l.stockActual > 0);
-                        setMermaForm({ ...mermaForm, productoId: pid, lotId: firstLot?.id || '' });
-                      }}
-                    >
-                      {products.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Lote afectado</label>
-                    <select className="form-control" value={mermaForm.lotId} onChange={(e) => setMermaForm({ ...mermaForm, lotId: e.target.value })} required>
-                      {lots.filter((l) => l.productoId === Number(mermaForm.productoId) && l.stockActual > 0).map((l) => (
-                        <option key={l.id} value={l.id}>{l.codigoLote} (Disp: {l.stockActual})</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Cantidad (máx: {maxMerma})</label>
-                    <input
-                      {...integerInputProps(mermaForm.cantidad, (val) => {
-                        if (val !== '' && Number(val) > maxMerma) {
-                          notify(`Stock insuficiente en el lote: máximo ${maxMerma} unidades.`, 'error');
-                        }
-                        setMermaForm({ ...mermaForm, cantidad: val });
-                      }, { min: 1 })}
-                      className="form-control"
-                      style={{ borderColor: mermaExcede ? 'var(--danger)' : undefined }}
-                      required
-                    />
-                  </div>
-                  <div className="form-group full">
-                    <label className="form-label">Motivo</label>
-                    <select className="form-control" value={mermaForm.motivo} onChange={(e) => setMermaForm({ ...mermaForm, motivo: e.target.value })}>
-                      <option value="Vencido">Vencido</option>
-                      <option value="Dañado">Dañado</option>
-                      <option value="Pérdida">Pérdida</option>
-                      <option value="Muestra">Muestra</option>
-                    </select>
+          <div className="modal-backdrop">
+            <div className="modal-dialog">
+              <div className="modal-header">
+                <h3 className="modal-title">Registrar Merma / Producto Dañado</h3>
+              </div>
+              <form onSubmit={handleMermaSubmit}>
+                <div className="modal-body">
+                  {mermaExcede && (
+                    <div className="alert-box danger mb-3">
+                      <AlertTriangle size={16} />
+                      <span>Stock insuficiente en este lote: solo hay {maxMerma} unidades disponibles.</span>
+                    </div>
+                  )}
+                  <div className="form-grid">
+                    <div className="form-group full">
+                      <label className="form-label">Producto</label>
+                      <select
+                        className="form-control"
+                        value={mermaForm.productoId}
+                        onChange={(e) => {
+                          const pid = Number(e.target.value);
+                          const firstLot = lots.find((l) => l.productoId === pid && l.stockActual > 0);
+                          setMermaForm({ ...mermaForm, productoId: pid, lotId: firstLot?.id || '' });
+                        }}
+                      >
+                        {products.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Lote afectado</label>
+                      <select className="form-control" value={mermaForm.lotId} onChange={(e) => setMermaForm({ ...mermaForm, lotId: e.target.value })} required>
+                        {lots.filter((l) => l.productoId === Number(mermaForm.productoId) && l.stockActual > 0).map((l) => (
+                          <option key={l.id} value={l.id}>{l.codigoLote} (Disp: {l.stockActual})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Cantidad (máx: {maxMerma})</label>
+                      <input
+                        {...integerInputProps(mermaForm.cantidad, (val) => {
+                          if (val !== '' && Number(val) > maxMerma) {
+                            notify(`Stock insuficiente en el lote: máximo ${maxMerma} unidades.`, 'error');
+                          }
+                          setMermaForm({ ...mermaForm, cantidad: val });
+                        }, { min: 1 })}
+                        className="form-control"
+                        style={{ borderColor: mermaExcede ? 'var(--danger)' : undefined }}
+                        required
+                      />
+                    </div>
+                    <div className="form-group full">
+                      <label className="form-label">Motivo</label>
+                      <select className="form-control" value={mermaForm.motivo} onChange={(e) => setMermaForm({ ...mermaForm, motivo: e.target.value })}>
+                        <option value="Vencido">Vencido</option>
+                        <option value="Dañado">Dañado</option>
+                        <option value="Pérdida">Pérdida</option>
+                        <option value="Muestra">Muestra</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setMermaModal(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-danger" disabled={mermaExcede || !mermaForm.lotId || !mermaForm.cantidad}>Registrar Merma</button>
-              </div>
-            </form>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-outline" onClick={() => setMermaModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn btn-danger" disabled={mermaExcede || !mermaForm.lotId || !mermaForm.cantidad}>Registrar Merma</button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
         );
       })()}
 

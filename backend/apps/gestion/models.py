@@ -73,6 +73,7 @@ class Producto(models.Model):
         blank=True,
         related_name='productos_surtidos',
         verbose_name='Proveedores',
+        db_table='productos_proveedores',
     )
     precio_compra = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Precio de Compra')
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Precio de Venta')

@@ -1,72 +1,93 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import {
+  Candy,
+  Calendar,
+  Clock,
+  ShoppingBag,
+  Store,
+  LogOut,
+  Sun,
+  Moon,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  FileText,
+  Plus,
+  Trash2,
+  User,
+  Phone,
+  Package,
+  Boxes,
+  Check,
+  CalendarClock,
+  Sparkles,
+  ArrowRight,
+  AlertTriangle,
+} from 'lucide-react';
 import { clienteApi, setClienteSesion, clearClienteSesion } from './clienteApi';
+import { useApp } from '../context/AppContext';
+import { validatePasswordStrength } from '../utils/validators';
 
 const ACTIVOS = ['Pendiente', 'En preparación'];
 const HISTORIAL = ['Entregado', 'Cancelado'];
 
-const COLORES_ESTADO = {
-  Pendiente: '#f59e0b',
-  'En preparación': '#3b82f6',
-  Entregado: '#10b981',
-  Cancelado: '#6b7280',
-};
+function formatCLPLocal(amount) {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    maximumFractionDigits: 0,
+  }).format(Number(amount || 0));
+}
 
-const pantalla = {
-  minHeight: '100vh',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 16,
-  background: '#fdf6f0',
-  boxSizing: 'border-box',
-};
-
-const tarjeta = {
-  background: '#fff',
-  borderRadius: 12,
-  padding: 24,
-  boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-  width: '100%',
-  maxWidth: 420,
-  boxSizing: 'border-box',
-};
-
-const campo = {
-  width: '100%',
-  padding: 10,
-  borderRadius: 8,
-  border: '1px solid #ccc',
-  marginBottom: 12,
-  boxSizing: 'border-box',
-  fontSize: '1rem',
-};
-
-const boton = {
-  width: '100%',
-  padding: 12,
-  borderRadius: 8,
-  border: 'none',
-  background: '#8b4513',
-  color: '#fff',
-  fontWeight: 700,
-  cursor: 'pointer',
-  fontSize: '1rem',
-};
-
-const etiqueta = { display: 'block', fontWeight: 600, marginBottom: 4, fontSize: '0.9rem' };
-
-const formatoPesos = (n) =>
-  new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(n || 0));
-
-function formatFecha(iso) {
+function formatFechaElegante(iso) {
   if (!iso) return '';
-  return new Date(`${iso}T00:00:00`).toLocaleDateString('es-CL', {
+  const d = new Date(`${iso}T00:00:00`);
+  const texto = d.toLocaleDateString('es-CL', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function formatFechaYHoraCreacion(creadoEn, hora) {
+  if (creadoEn) {
+    try {
+      const d = new Date(creadoEn);
+      if (!isNaN(d.getTime())) {
+        const fechaStr = d.toLocaleDateString('es-CL', {
+          day: 'numeric',
+          month: 'short',
+        });
+        const horaStr = d.toLocaleTimeString('es-CL', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+        return `${fechaStr} a las ${horaStr} hrs`;
+      }
+    } catch {
+      // fallback
+    }
+  }
+  if (hora) {
+    return `a las ${hora} hrs`;
+  }
+  return 'Registrado en sistema';
+}
+
+function getDiasRelativos(fechaIso) {
+  if (!fechaIso) return null;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const target = new Date(`${fechaIso}T00:00:00`);
+  const diffDays = Math.round((target - hoy) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return { texto: '¡Retiro programado para Hoy!', color: '#e11d48', urgente: true };
+  if (diffDays === 1) return { texto: 'Retiro programado para Mañana', color: '#ea580c', urgente: false };
+  if (diffDays > 1) return { texto: `Retiro en ${diffDays} días`, color: '#64748b', urgente: false };
+  return { texto: 'Fecha pasada', color: '#6b7280', urgente: false };
 }
 
 function fechaLocal(d) {
@@ -76,204 +97,287 @@ function fechaLocal(d) {
   return `${y}-${m}-${day}`;
 }
 
-export function ClienteLoginPage() {
-  const navigate = useNavigate();
-  const [telefono, setTelefono] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [cargando, setCargando] = useState(false);
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setCargando(true);
-    try {
-      const res = await clienteApi.login(telefono, password);
-      setClienteSesion(res.token, res.cliente);
-      navigate('/cliente', { replace: true });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  return (
-    <div style={pantalla}>
-      <form onSubmit={onSubmit} style={tarjeta}>
-        <h2 style={{ marginTop: 0 }}>Ingreso de clientes</h2>
-        <label style={etiqueta}>Teléfono</label>
-        <input
-          style={campo}
-          value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
-          placeholder="9 1234 5678"
-          required
-        />
-        <label style={etiqueta}>Contraseña</label>
-        <input
-          style={campo}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {error && <div style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
-        <button style={boton} disabled={cargando}>
-          {cargando ? 'Ingresando...' : 'Ingresar'}
-        </button>
-        <p style={{ textAlign: 'center', marginTop: 16, fontSize: '0.9rem' }}>
-          ¿No tienes cuenta? <Link to="/cliente/registro">Regístrate</Link>
-        </p>
-      </form>
-    </div>
-  );
-}
-
-export function ClienteRegistroPage() {
-  const navigate = useNavigate();
-  const [nombre, setNombre] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [password, setPassword] = useState('');
-  const [repetir, setRepetir] = useState('');
-  const [error, setError] = useState('');
-  const [cargando, setCargando] = useState(false);
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-    if (password !== repetir) {
-      setError('Las contraseñas no coinciden.');
-      return;
-    }
-    setCargando(true);
-    try {
-      const res = await clienteApi.registro(telefono, nombre, password);
-      setClienteSesion(res.token, res.cliente);
-      navigate('/cliente', { replace: true });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  return (
-    <div style={pantalla}>
-      <form onSubmit={onSubmit} style={tarjeta}>
-        <h2 style={{ marginTop: 0 }}>Crear cuenta</h2>
-        <label style={etiqueta}>Nombre</label>
-        <input style={campo} value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-        <label style={etiqueta}>Teléfono</label>
-        <input
-          style={campo}
-          value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
-          placeholder="9 1234 5678"
-          required
-        />
-        <label style={etiqueta}>Contraseña</label>
-        <input
-          style={campo}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <label style={etiqueta}>Repetir contraseña</label>
-        <input
-          style={campo}
-          type="password"
-          value={repetir}
-          onChange={(e) => setRepetir(e.target.value)}
-          required
-        />
-        {error && <div style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
-        <button style={boton} disabled={cargando}>
-          {cargando ? 'Creando cuenta...' : 'Crear cuenta'}
-        </button>
-        <p style={{ textAlign: 'center', marginTop: 16, fontSize: '0.9rem' }}>
-          ¿Ya tienes cuenta? <Link to="/cliente/login">Ingresa aquí</Link>
-        </p>
-      </form>
-    </div>
-  );
-}
-
+/**
+ * Tarjeta individual de encargo con tracker visual de estado
+ */
 function EncargoCard({ enc, onCancelar }) {
+  const relativo = getDiasRelativos(enc.fecha_entrega);
+
+  const trackerStep = useMemo(() => {
+    if (enc.estado === 'Pendiente') return 1;
+    if (enc.estado === 'En preparación') return 2;
+    if (enc.estado === 'Entregado') return 3;
+    return 0; // Cancelado
+  }, [enc.estado]);
+
+  const progressPercent = useMemo(() => {
+    if (trackerStep === 1) return '15%';
+    if (trackerStep === 2) return '55%';
+    if (trackerStep === 3) return '100%';
+    return '0%';
+  }, [trackerStep]);
+
   return (
-    <div style={{ border: '1px solid #eee', borderRadius: 10, padding: 14, marginBottom: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-        <strong style={{ textTransform: 'capitalize' }}>{formatFecha(enc.fecha_entrega)}</strong>
-        <span
-          style={{
-            background: COLORES_ESTADO[enc.estado] || '#6b7280',
-            color: '#fff',
-            borderRadius: 999,
-            padding: '2px 10px',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-          }}
-        >
-          {enc.estado}
-        </span>
+    <div className="order-card">
+      <div className="order-card-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 10,
+              background: enc.estado === 'En preparación' ? 'rgba(245, 158, 11, 0.15)' : 'var(--primary-soft)',
+              color: enc.estado === 'En preparación' ? '#d97706' : 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <CalendarClock size={22} />
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span className="small text-muted" style={{ fontWeight: 600 }}>Fecha de Retiro:</span>
+              <strong style={{ fontSize: '1.05rem', color: 'var(--text-main)' }}>
+                {formatFechaElegante(enc.fecha_entrega)}
+              </strong>
+              {relativo && (
+                <span
+                  style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: relativo.color,
+                    background: 'var(--surface)',
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: 999,
+                    border: `1px solid ${relativo.color}40`,
+                  }}
+                >
+                  {relativo.texto}
+                </span>
+              )}
+            </div>
+            <div className="small text-muted flex-center" style={{ gap: '0.65rem', marginTop: '0.15rem' }}>
+              <span>
+                <CalendarClock size={12} style={{ display: 'inline', marginRight: 4, color: 'var(--primary)' }} />
+                Solicitado: <strong>{formatFechaYHoraCreacion(enc.creado_en, enc.hora_entrega)}</strong>
+              </span>
+              <span>·</span>
+              <span>Código #{enc.id}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-center" style={{ gap: '0.65rem' }}>
+          {enc.estado === 'Pendiente' && (
+            <span className="badge badge-warning" style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem' }}>
+              <Clock size={13} /> Pendiente de confirmación
+            </span>
+          )}
+          {enc.estado === 'En preparación' && (
+            <span className="badge badge-info" style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem' }}>
+              <Boxes size={13} /> En preparación en taller
+            </span>
+          )}
+          {enc.estado === 'Entregado' && (
+            <span className="badge badge-success" style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem' }}>
+              <CheckCircle2 size={13} /> Entregado / Retirado
+            </span>
+          )}
+          {enc.estado === 'Cancelado' && (
+            <span className="badge badge-danger" style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem' }}>
+              <X size={13} /> Encargo Cancelado
+            </span>
+          )}
+        </div>
       </div>
-      <div style={{ fontSize: '0.9rem', color: '#555', marginTop: 4 }}>Hora: {enc.hora_entrega}</div>
-      {enc.items?.length > 0 && (
-        <ul style={{ margin: '8px 0', paddingLeft: 18, fontSize: '0.9rem' }}>
-          {enc.items.map((it, i) => (
-            <li key={i}>
-              {it.cantidad} × {it.producto}
-            </li>
-          ))}
-        </ul>
-      )}
-      {enc.notas && <div style={{ fontSize: '0.85rem', color: '#555' }}>Notas: {enc.notas}</div>}
-      {enc.estado === 'Pendiente' && (
-        <button
-          onClick={() => onCancelar(enc)}
+
+      <div className="order-card-body">
+        {/* Tracker visual de estado (excepto cancelado) */}
+        {enc.estado !== 'Cancelado' ? (
+          <div className="order-tracker">
+            <div className="order-tracker-line">
+              <div className="order-tracker-line-fill" style={{ width: progressPercent }} />
+            </div>
+
+            <div className={`order-step ${trackerStep >= 1 ? 'completed' : ''}`}>
+              <div className="order-step-node">
+                {trackerStep > 1 ? <Check size={16} /> : '1'}
+              </div>
+              <span className="order-step-title">Encargo Solicitado</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                {enc.hora_entrega ? `${enc.hora_entrega} hrs` : 'Registrado'}
+              </span>
+            </div>
+
+            <div className={`order-step ${trackerStep > 2 ? 'completed' : trackerStep === 2 ? 'current' : ''}`}>
+              <div className="order-step-node">
+                {trackerStep > 2 ? <Check size={16} /> : trackerStep === 2 ? <Boxes size={15} /> : '2'}
+              </div>
+              <span className="order-step-title">En Preparación</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                Armado de pedido
+              </span>
+            </div>
+
+            <div className={`order-step ${trackerStep === 3 ? 'completed' : ''}`}>
+              <div className="order-step-node">
+                {trackerStep === 3 ? <Check size={16} /> : <Store size={15} />}
+              </div>
+              <span className="order-step-title">Listo para Retiro</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                {new Date(`${enc.fecha_entrega}T00:00:00`).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="alert-box danger mb-3" style={{ fontSize: '0.84rem' }}>
+            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>Este encargo fue cancelado y no será preparado ni despachado.</span>
+          </div>
+        )}
+
+        {/* Resumen de productos del encargo */}
+        <div>
+          <div className="small text-muted fw-bold mb-2 flex-center" style={{ gap: 5 }}>
+            <Package size={14} /> Detalle de productos en el pedido ({enc.items?.length || 0}):
+          </div>
+
+          <div className="order-items-grid">
+            {enc.items?.map((it, idx) => (
+              <div key={idx} className="order-item-chip">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      background: 'var(--primary-soft)',
+                      color: 'var(--primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '0.74rem',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {idx + 1}
+                  </div>
+                  <span style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {it.producto}
+                  </span>
+                </div>
+                <span
+                  style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: 999,
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: 'var(--primary)',
+                    flexShrink: 0,
+                  }}
+                >
+                  × {it.cantidad}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Notas del cliente */}
+        {enc.notas && (
+          <div
+            style={{
+              background: 'var(--surface-alt)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 8,
+              padding: '0.7rem 0.95rem',
+              display: 'flex',
+              gap: 8,
+              alignItems: 'flex-start',
+              fontSize: '0.83rem',
+              color: 'var(--text-muted)',
+              marginTop: '0.65rem',
+            }}
+          >
+            <FileText size={15} style={{ flexShrink: 0, marginTop: 2, color: 'var(--primary)' }} />
+            <div>
+              <strong style={{ color: 'var(--text-main)' }}>Notas o indicaciones:</strong> {enc.notas}
+            </div>
+          </div>
+        )}
+
+        {/* Pie con opciones y estado */}
+        <div
           style={{
-            marginTop: 8,
-            padding: '6px 12px',
-            borderRadius: 6,
-            border: '1px solid #b91c1c',
-            background: '#fff',
-            color: '#b91c1c',
-            cursor: 'pointer',
+            borderTop: '1px solid var(--border-subtle)',
+            marginTop: '1.15rem',
+            paddingTop: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
           }}
         >
-          Cancelar encargo
-        </button>
-      )}
+          <div className="small text-muted">
+            {enc.estado === 'En preparación' ? (
+              <span className="text-info fw-bold">
+                ✓ Pedido en elaboración. Si necesitas cambiar la hora de retiro, contáctanos al local.
+              </span>
+            ) : enc.estado === 'Pendiente' ? (
+              <span>Puedes cancelar este encargo mientras esté en estado pendiente.</span>
+            ) : (
+              <span>Pedido completado en nuestros registros.</span>
+            )}
+          </div>
+
+          {enc.estado === 'Pendiente' && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm text-danger"
+              style={{ borderColor: 'rgba(239, 68, 68, 0.4)' }}
+              onClick={() => onCancelar(enc)}
+            >
+              <Trash2 size={13} /> Cancelar este encargo
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
+/**
+ * Dashboard Principal de Encargos del Cliente (/cliente)
+ */
 export function ClientePanelPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme, notify } = useApp();
+
   const [cliente, setCliente] = useState(null);
   const [encargos, setEncargos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState(location.state?.mensaje || '');
+  const [filterTab, setFilterTab] = useState('activos'); // 'activos' | 'preparacion' | 'pendientes' | 'historial'
 
   const cerrarSesion = () => {
     clearClienteSesion();
-    navigate('/cliente/login', { replace: true });
+    navigate('/login', { replace: true });
   };
 
   const manejarError = (err) => {
-    // Token vencido o inválido: volver al login
     if (err.status === 401 || err.status === 403) {
       cerrarSesion();
       return;
     }
-    setError(err.message);
+    setError(err.message || 'Error al comunicarse con el servidor.');
   };
 
   const cargar = async () => {
@@ -294,11 +398,14 @@ export function ClientePanelPage() {
   }, []);
 
   const cancelar = async (enc) => {
-    if (!window.confirm(`¿Cancelar tu encargo del ${formatFecha(enc.fecha_entrega)}?`)) return;
+    if (!window.confirm(`¿Seguro que deseas cancelar tu encargo del ${formatFechaElegante(enc.fecha_entrega)}?`)) {
+      return;
+    }
     setError('');
     setMensaje('');
     try {
       await clienteApi.cancelarEncargo(enc.id);
+      if (notify) notify('Encargo cancelado con éxito.');
       setMensaje('Encargo cancelado.');
       await cargar();
     } catch (err) {
@@ -310,208 +417,282 @@ export function ClientePanelPage() {
     try {
       await clienteApi.logout();
     } catch {
-      // si falla, igual cerramos sesión local
+      // noop
     }
     cerrarSesion();
   };
 
+  const activos = useMemo(() => encargos.filter((e) => ACTIVOS.includes(e.estado)), [encargos]);
+  const enPreparacion = useMemo(() => encargos.filter((e) => e.estado === 'En preparación'), [encargos]);
+  const pendientes = useMemo(() => encargos.filter((e) => e.estado === 'Pendiente'), [encargos]);
+  const historial = useMemo(() => encargos.filter((e) => HISTORIAL.includes(e.estado)), [encargos]);
+
+  // Próxima entrega programada más cercana
+  const proximaEntrega = useMemo(() => {
+    if (activos.length === 0) return null;
+    const sorted = [...activos].sort((a, b) => new Date(`${a.fecha_entrega}T00:00:00`) - new Date(`${b.fecha_entrega}T00:00:00`));
+    return sorted[0];
+  }, [activos]);
+
+  const listaFiltrada = useMemo(() => {
+    if (filterTab === 'preparacion') return enPreparacion;
+    if (filterTab === 'pendientes') return pendientes;
+    if (filterTab === 'historial') return historial;
+    return activos;
+  }, [filterTab, activos, enPreparacion, pendientes, historial]);
+
   if (cargando) {
-    return <div style={pantalla}>Cargando...</div>;
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
+        <div className="empty-state">
+          <Candy size={36} className="text-muted" style={{ animation: 'spin 1.5s linear infinite' }} />
+          <p className="mt-2 fw-bold">Cargando tus encargos...</p>
+        </div>
+      </div>
+    );
   }
 
-  const activos = encargos.filter((e) => ACTIVOS.includes(e.estado));
-  const historial = encargos.filter((e) => HISTORIAL.includes(e.estado));
-
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: 16, boxSizing: 'border-box' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Hola, {cliente?.nombre}</h2>
-          <span style={{ fontSize: '0.9rem', color: '#666' }}>Tus encargos en la confitería</span>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Link
-            to="/cliente/nuevo"
-            style={{
-              padding: '8px 14px',
-              borderRadius: 8,
-              background: '#8b4513',
-              color: '#fff',
-              textDecoration: 'none',
-              fontWeight: 600,
-            }}
-          >
-            Nuevo encargo
-          </Link>
-          <button
-            onClick={salir}
-            style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #ccc', background: '#fff', cursor: 'pointer' }}
-          >
-            Salir
-          </button>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-main)' }}>
+      {/* Topbar del portal de clientes */}
+      <header className="topbar store-topbar">
+        <div className="store-topbar-inner">
+          <div className="topbar-left">
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div className="sidebar-brand-icon" style={{ width: 38, height: 38, borderRadius: 10 }}>
+                <Candy size={20} />
+              </div>
+              <div>
+                <strong style={{ fontSize: '1.18rem', letterSpacing: '-0.3px', display: 'block', lineHeight: 1.15 }}>
+                  Confitería Arteconfi
+                </strong>
+                <span className="small text-muted" style={{ fontSize: '0.74rem' }}>
+                  Portal de Clientes · Mis Encargos
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          <div className="topbar-right" style={{ gap: '0.6rem', flexWrap: 'wrap' }}>
+            <Link to="/" className="btn btn-primary btn-sm" style={{ fontWeight: 700 }}>
+              <Store size={15} /> <span>Ir a la Tienda</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="btn btn-outline btn-sm"
+              title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
+            >
+              {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
+            </button>
+
+            <button type="button" className="btn btn-outline btn-sm" onClick={salir} title="Cerrar sesión">
+              <LogOut size={14} /> <span className="hide-on-mobile">Salir</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      {mensaje && <div style={{ color: '#047857', marginBottom: 12 }}>{mensaje}</div>}
-      {error && <div style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
+      {/* Contenido principal */}
+      <main className="page-content" style={{ width: '100%', maxWidth: '100%', flex: 1, padding: '1.25rem clamp(1rem, 2.5vw, 2.5rem)', boxSizing: 'border-box' }}>
+        {/* Hero Card con Saludo y KPIs del Cliente */}
+        <div className="client-hero-card">
+          <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--primary-soft)', color: 'var(--primary)', padding: '0.2rem 0.65rem', borderRadius: 999, fontSize: '0.74rem', fontWeight: 700, marginBottom: '0.35rem' }}>
+                <Sparkles size={12} /> Cliente Registrado
+              </div>
+              <h1 style={{ margin: 0, fontSize: 'clamp(1.35rem, 2.5vw, 1.7rem)', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>
+                Hola, {cliente?.nombre} 👋
+              </h1>
+              <p className="small text-muted mt-1" style={{ marginBottom: 0 }}>
+                Revisa el estado de tus pedidos de confitería, retiros programados y solicitudes de encargo.
+              </p>
+            </div>
 
-      <section style={{ ...tarjeta, maxWidth: '100%', marginBottom: 20 }}>
-        <h3 style={{ marginTop: 0 }}>Encargos activos</h3>
-        {activos.length === 0 && <p style={{ color: '#666' }}>No tienes encargos activos.</p>}
-        {activos.map((enc) => (
-          <EncargoCard key={enc.id} enc={enc} onCancelar={cancelar} />
-        ))}
-      </section>
+            <div className="flex-center" style={{ gap: '0.55rem', flexWrap: 'wrap' }}>
+              <div style={{ background: 'var(--surface-alt)', border: '1px solid var(--border)', borderRadius: 10, padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Phone size={15} style={{ color: 'var(--primary)' }} />
+                <span className="small fw-bold" style={{ color: 'var(--text-main)' }}>
+                  {cliente?.telefono}
+                </span>
+              </div>
+            </div>
+          </div>
 
-      <section style={{ ...tarjeta, maxWidth: '100%' }}>
-        <h3 style={{ marginTop: 0 }}>Historial</h3>
-        {historial.length === 0 && <p style={{ color: '#666' }}>Aún no tienes entregas ni cancelaciones.</p>}
-        {historial.map((enc) => (
-          <EncargoCard key={enc.id} enc={enc} onCancelar={cancelar} />
-        ))}
-      </section>
+          {/* Fila de Tarjetas Resumen (KPIs) */}
+          <div className="client-kpi-grid">
+            <div className="client-kpi-tile">
+              <div className="client-kpi-icon" style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}>
+                <ShoppingBag size={22} />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.45rem', fontWeight: 800, lineHeight: 1.1, color: 'var(--text-main)' }}>
+                  {activos.length}
+                </div>
+                <div className="small text-muted" style={{ fontSize: '0.76rem', fontWeight: 600 }}>
+                  Pedidos en Curso
+                </div>
+              </div>
+            </div>
+
+            <div className="client-kpi-tile">
+              <div className="client-kpi-icon" style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#0891b2' }}>
+                <Boxes size={22} />
+              </div>
+              <div>
+                <div style={{ fontSize: '1.45rem', fontWeight: 800, lineHeight: 1.1, color: 'var(--text-main)' }}>
+                  {enPreparacion.length}
+                </div>
+                <div className="small text-muted" style={{ fontSize: '0.76rem', fontWeight: 600 }}>
+                  En Preparación en Taller
+                </div>
+              </div>
+            </div>
+
+            <div className="client-kpi-tile">
+              <div className="client-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                <CheckCircle2 size={22} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.98rem', fontWeight: 800, lineHeight: 1.2, color: 'var(--text-main)' }}>
+                  {proximaEntrega ? (
+                    <span>
+                      {new Date(`${proximaEntrega.fecha_entrega}T00:00:00`).toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    </span>
+                  ) : (
+                    'Sin entregas pendientes'
+                  )}
+                </div>
+                <div className="small text-muted" style={{ fontSize: '0.76rem', fontWeight: 600 }}>
+                  Próximo Retiro
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notificaciones y Alertas */}
+        {mensaje && (
+          <div className="alert-box success mb-3">
+            <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>{mensaje}</span>
+          </div>
+        )}
+        {error && (
+          <div className="alert-box danger mb-3">
+            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Pestañas de Filtrado de Encargos */}
+        <div className="card mb-3">
+          <div className="card-body" style={{ padding: '0.85rem 1.15rem' }}>
+            <div className="flex-between" style={{ flexWrap: 'wrap', gap: '0.65rem' }}>
+              <div className="flex-center" style={{ flexWrap: 'wrap', gap: '0.45rem' }}>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${filterTab === 'activos' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setFilterTab('activos')}
+                >
+                  <ShoppingBag size={14} /> Todos los Activos ({activos.length})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${filterTab === 'preparacion' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setFilterTab('preparacion')}
+                >
+                  <Boxes size={14} /> En Preparación ({enPreparacion.length})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${filterTab === 'pendientes' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setFilterTab('pendientes')}
+                >
+                  <Clock size={14} /> Pendientes ({pendientes.length})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${filterTab === 'historial' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setFilterTab('historial')}
+                >
+                  <CheckCircle2 size={14} /> Historial ({historial.length})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Listado de Encargos */}
+        {listaFiltrada.length === 0 ? (
+          <div className="card">
+            <div className="empty-state" style={{ padding: '3.5rem 1.5rem' }}>
+              <div
+                style={{
+                  width: 58,
+                  height: 58,
+                  borderRadius: '50%',
+                  background: 'var(--surface-alt)',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1rem',
+                }}
+              >
+                <ShoppingBag size={28} />
+              </div>
+              <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.15rem', fontWeight: 700 }}>
+                {filterTab === 'historial'
+                  ? 'Aún no tienes entregas pasadas ni cancelaciones'
+                  : 'No tienes encargos en esta categoría'}
+              </h3>
+              <p className="small text-muted" style={{ maxWidth: 460, margin: '0 auto 1.25rem' }}>
+                Explora los productos disponibles en la confitería y reserva tu canasto con retiro programado en tienda.
+              </p>
+              <div className="flex-center" style={{ justifyContent: 'center' }}>
+                <Link to="/" className="btn btn-primary">
+                  <Store size={15} /> Explorar Catálogo y Encargar en Tienda
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {listaFiltrada.map((enc) => (
+              <EncargoCard key={enc.id} enc={enc} onCancelar={cancelar} />
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
+/**
+ * Redirección de Nuevo Encargo hacia la Tienda con Carrito
+ */
 export function ClienteNuevoEncargoPage() {
+  return <Navigate to="/" replace />;
+}
+
+/**
+ * Redirección de login/registro legado si se invoca directamente
+ */
+export function ClienteLoginPage() {
   const navigate = useNavigate();
-  const [catalogo, setCatalogo] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [cantidades, setCantidades] = useState({});
-  const [fecha, setFecha] = useState('');
-  const [hora, setHora] = useState('16:00');
-  const [notas, setNotas] = useState('');
-  const [error, setError] = useState('');
-  const [enviando, setEnviando] = useState(false);
-
-  const manana = new Date();
-  manana.setDate(manana.getDate() + 1);
-  const minFecha = fechaLocal(manana);
-
-  const manejarError = (err) => {
-    if (err.status === 401 || err.status === 403) {
-      clearClienteSesion();
-      navigate('/cliente/login', { replace: true });
-      return;
-    }
-    setError(err.message);
-  };
-
   useEffect(() => {
-    clienteApi
-      .catalogo()
-      .then(setCatalogo)
-      .catch(manejarError)
-      .finally(() => setCargando(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    navigate('/login', { replace: true });
+  }, [navigate]);
+  return null;
+}
 
-  const cambiarCantidad = (producto, valor) => {
-    const n = Math.max(0, Math.min(Number(valor) || 0, producto.disponible));
-    setCantidades((prev) => ({ ...prev, [producto.id]: n }));
-  };
-
-  const seleccionados = catalogo.filter((p) => Number(cantidades[p.id]) > 0);
-  const total = seleccionados.reduce((s, p) => s + Number(p.precio_venta) * Number(cantidades[p.id]), 0);
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (!fecha || fecha < minFecha) {
-      setError('Elige una fecha de entrega desde mañana en adelante.');
-      return;
-    }
-    if (seleccionados.length === 0) {
-      setError('Agrega al menos un producto.');
-      return;
-    }
-    setEnviando(true);
-    try {
-      await clienteApi.crearEncargo({
-        fecha_entrega: fecha,
-        hora_entrega: hora,
-        notas,
-        items: seleccionados.map((p) => ({ producto_id: p.id, cantidad: Number(cantidades[p.id]) })),
-      });
-      navigate('/cliente', {
-        replace: true,
-        state: { mensaje: 'Encargo solicitado. La confitería confirmará tu pedido.' },
-      });
-    } catch (err) {
-      manejarError(err);
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  if (cargando) {
-    return <div style={pantalla}>Cargando productos...</div>;
-  }
-
-  return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: 16, boxSizing: 'border-box' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Nuevo encargo</h2>
-        <Link to="/cliente" style={{ color: '#8b4513' }}>Volver a mis encargos</Link>
-      </header>
-
-      <form onSubmit={onSubmit} style={{ ...tarjeta, maxWidth: '100%' }}>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 180 }}>
-            <label style={etiqueta}>Fecha de entrega</label>
-            <input type="date" style={campo} min={minFecha} value={fecha} onChange={(e) => setFecha(e.target.value)} required />
-          </div>
-          <div style={{ flex: 1, minWidth: 140 }}>
-            <label style={etiqueta}>Hora</label>
-            <input type="time" style={campo} value={hora} onChange={(e) => setHora(e.target.value)} required />
-          </div>
-        </div>
-
-        <h3>Productos</h3>
-        {catalogo.length === 0 && <p style={{ color: '#666' }}>No hay productos disponibles para pedir ahora.</p>}
-        {catalogo.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-              borderBottom: '1px solid #eee',
-              padding: '10px 0',
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600 }}>{p.nombre}</div>
-              <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                {p.categoria} · {formatoPesos(p.precio_venta)} / {p.unidad_medida.toLowerCase()} · disponibles: {p.disponible}
-              </div>
-            </div>
-            <input
-              type="number"
-              min={0}
-              max={p.disponible}
-              value={cantidades[p.id] || 0}
-              onChange={(e) => cambiarCantidad(p, e.target.value)}
-              style={{ width: 80, padding: 8, borderRadius: 8, border: '1px solid #ccc' }}
-            />
-          </div>
-        ))}
-
-        <label style={{ ...etiqueta, marginTop: 16 }}>Notas (opcional)</label>
-        <textarea style={{ ...campo, minHeight: 70 }} value={notas} onChange={(e) => setNotas(e.target.value)} />
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, margin: '12px 0' }}>
-          <span>Total estimado</span>
-          <span>{formatoPesos(total)}</span>
-        </div>
-
-        {error && <div style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
-        <button style={boton} disabled={enviando}>
-          {enviando ? 'Enviando...' : 'Solicitar encargo'}
-        </button>
-      </form>
-    </div>
-  );
+export function ClienteRegistroPage() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate('/login?tab=registro', { replace: true });
+  }, [navigate]);
+  return null;
 }

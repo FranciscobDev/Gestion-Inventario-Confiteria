@@ -54,8 +54,10 @@ export default function EncargosPage() {
         return;
       }
     }
+    const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
     createOrder({
       ...form,
+      horaEntrega: horaActual,
       items: form.items.map((i) => ({ productoId: Number(i.productoId), cantidad: Number(i.cantidad) })),
     });
     setShowNewModal(false);
@@ -193,9 +195,11 @@ export default function EncargosPage() {
                   </div>
 
                   <div>
-                    <div className="small text-muted">Entrega Pactada</div>
-                    <div className="fw-bold">
-                      {o.fechaEntrega} · {o.horaEntrega} hrs
+                    <div className="small text-muted">Retiro Programado</div>
+                    <div className="fw-bold">{o.fechaEntrega}</div>
+                    <div className="small text-muted mt-1" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Clock size={12} />
+                      <span>Solicitado: {o.creadoEn || (o.horaEntrega ? `${o.horaEntrega} hrs` : '-')}</span>
                     </div>
                     <div className="small text-muted mt-1">
                       <strong>Productos reservados:</strong>
@@ -260,7 +264,7 @@ export default function EncargosPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Fecha de Entrega *</label>
+                    <label className="form-label">Fecha de Retiro *</label>
                     <input
                       type="date"
                       className="form-control"
@@ -270,13 +274,13 @@ export default function EncargosPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Hora de Entrega *</label>
+                    <label className="form-label">Hora de Registro</label>
                     <input
-                      type="time"
+                      type="text"
                       className="form-control"
-                      value={form.horaEntrega}
-                      onChange={(e) => setForm({ ...form, horaEntrega: e.target.value })}
-                      required
+                      value="Automática (Hora actual al agendar)"
+                      disabled
+                      readOnly
                     />
                   </div>
                   <div className="form-group full">
