@@ -13,3 +13,7 @@
 
 # 06-11 : Autenticación se readapta de otro repositorio, de Ismael y Francisco miranda !
 (https://github.com/themonkeypoxx/ProyectoBackend-ev3)
+<br>
+
+# Nota (ramaVasky — conexión portal cliente y encargos admin):
+Al bajar o hacer merge de esta rama, correr `python manage.py migrate` en `/backend` para aplicar la migración `0003_encargo_origen` (agrega el campo `origen` en `Encargo`).
