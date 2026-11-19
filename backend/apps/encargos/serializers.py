@@ -32,8 +32,10 @@ class EncargoSerializer(serializers.ModelSerializer):
             'creado_en',
             'items',
             'historial',
+            'origen',
+            'cliente_id',
         ]
-        read_only_fields = ['creado_en']
+        read_only_fields = ['creado_en', 'origen', 'cliente_id']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
