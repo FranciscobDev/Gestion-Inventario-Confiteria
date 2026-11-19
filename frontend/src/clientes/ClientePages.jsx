@@ -311,6 +311,34 @@ function EncargoCard({ enc, onCancelar }) {
           </div>
         )}
 
+        {/* Historial de estados del pedido */}
+        {Array.isArray(enc.historial) && enc.historial.length > 0 && (
+          <div style={{ marginTop: '0.85rem' }}>
+            <div className="small text-muted fw-bold mb-2 flex-center" style={{ gap: 5 }}>
+              <Clock size={14} /> Historial de estados:
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              {enc.historial.map((h, idx) => (
+                <div
+                  key={idx}
+                  className="small"
+                  style={{
+                    borderLeft: '2px solid var(--border)',
+                    paddingLeft: '0.6rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <strong style={{ color: 'var(--text-main)' }}>{h.estado}</strong>
+                  <span className="text-muted">· {formatFechaYHoraCreacion(h.fecha)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Pie con opciones y estado */}
         <div
           style={{
@@ -394,6 +422,21 @@ export function ClientePanelPage() {
 
   useEffect(() => {
     cargar();
+    let activo = true;
+    const timer = setInterval(async () => {
+      try {
+        const lista = await clienteApi.encargos();
+        if (activo) setEncargos(lista);
+      } catch (err) {
+        if (activo && (err.status === 401 || err.status === 403)) {
+          cerrarSesion();
+        }
+      }
+    }, 60000);
+    return () => {
+      activo = false;
+      clearInterval(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
