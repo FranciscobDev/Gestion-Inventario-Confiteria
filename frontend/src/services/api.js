@@ -43,6 +43,28 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 // --- Mappers Backend (snake_case) -> Frontend (camelCase) ---
 const fmtDt = (iso) => (iso ? iso.replace('T', ' ').slice(0, 16) : '');
 
+export const mapOrder = (o) => ({
+  id: o.id,
+  clienteNombre: o.cliente_nombre,
+  clienteTelefono: o.cliente_telefono,
+  fechaEntrega: o.fecha_entrega,
+  horaEntrega: o.hora_entrega,
+  creadoEn: o.creado_en ? fmtDt(o.creado_en) : (o.hora_entrega ? `${o.fecha_entrega} ${o.hora_entrega}` : null),
+  estado: o.estado,
+  notas: o.notas || '',
+  origen: o.origen,
+  clienteId: o.cliente_id ?? null,
+  items: (o.items || []).map((it) => ({
+    productoId: it.producto,
+    cantidad: it.cantidad,
+  })),
+  historial: (o.historial || []).map((h) => ({
+    fecha: fmtDt(h.fecha),
+    estado: h.estado,
+    motivo: h.motivo,
+  })),
+});
+
 export function mapBootstrapData(raw) {
   return {
     configAlerts: {
@@ -111,25 +133,7 @@ export function mapBootstrapData(raw) {
         cantidad: it.cantidad,
       })),
     })),
-    orders: (raw.orders || []).map((o) => ({
-      id: o.id,
-      clienteNombre: o.cliente_nombre,
-      clienteTelefono: o.cliente_telefono,
-      fechaEntrega: o.fecha_entrega,
-      horaEntrega: o.hora_entrega,
-      creadoEn: o.creado_en ? fmtDt(o.creado_en) : (o.hora_entrega ? `${o.fecha_entrega} ${o.hora_entrega}` : null),
-      estado: o.estado,
-      notas: o.notas || '',
-      items: (o.items || []).map((it) => ({
-        productoId: it.producto,
-        cantidad: it.cantidad,
-      })),
-      historial: (o.historial || []).map((h) => ({
-        fecha: fmtDt(h.fecha),
-        estado: h.estado,
-        motivo: h.motivo,
-      })),
-    })),
+    orders: (raw.orders || []).map(mapOrder),
     movements: (raw.movements || []).map((m) => ({
       id: m.id,
       fechaHora: fmtDt(m.fecha_hora),
@@ -238,6 +242,7 @@ export const api = {
     request('/api/inventario/combos/', { method: 'POST', body: payload }),
 
   // Encargos
+  listOrders: () => request('/api/encargos/'),
   createOrder: (payload) =>
     request('/api/encargos/', { method: 'POST', body: payload }),
   updateOrderStatus: (orderId, estado, motivo) =>

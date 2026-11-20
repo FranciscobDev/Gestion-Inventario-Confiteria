@@ -7,6 +7,7 @@ import {
   XCircle,
   ChefHat,
   AlertTriangle,
+  Store,
 } from 'lucide-react';
 import { useApp, daysUntil, todayStr } from '../context/AppContext';
 import { integerInputProps, onlyPhoneChars } from '../utils/validators';
@@ -15,6 +16,7 @@ export default function EncargosPage() {
   const { products, orders, getProductStockInfo, createOrder, updateOrderStatus, notify } = useApp();
 
   const [estadoFiltro, setEstadoFiltro] = useState('Todos');
+  const [origenFiltro, setOrigenFiltro] = useState('Todos');
   const [showNewModal, setShowNewModal] = useState(false);
   const [cancelModal, setCancelModal] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -32,7 +34,12 @@ export default function EncargosPage() {
 
   // Ordenar: entregas atrasadas / hoy primero
   const sortedOrders = [...orders]
-    .filter((o) => (estadoFiltro === 'Todos' ? true : o.estado === estadoFiltro))
+    .filter((o) => {
+      const orig = o.origen || 'Admin';
+      const matchEstado = estadoFiltro === 'Todos' ? true : o.estado === estadoFiltro;
+      const matchOrigen = origenFiltro === 'Todos' ? true : orig === origenFiltro;
+      return matchEstado && matchOrigen;
+    })
     .sort((a, b) => {
       const aActive = a.estado === 'Pendiente' || a.estado === 'En preparación';
       const bActive = b.estado === 'Pendiente' || b.estado === 'En preparación';
@@ -97,9 +104,9 @@ export default function EncargosPage() {
         </div>
       </div>
 
-      {/* Filtros de estado */}
+      {/* Filtros de estado y origen */}
       <div className="card mb-3">
-        <div className="card-body" style={{ padding: '0.85rem 1.25rem' }}>
+        <div className="card-body" style={{ padding: '0.85rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           <div className="filter-bar">
             {['Todos', 'Pendiente', 'En preparación', 'Entregado', 'Cancelado'].map((st) => (
               <button
@@ -108,6 +115,22 @@ export default function EncargosPage() {
                 onClick={() => setEstadoFiltro(st)}
               >
                 {st}
+              </button>
+            ))}
+          </div>
+          <div className="filter-bar">
+            <span className="small text-muted fw-bold">Origen:</span>
+            {[
+              { value: 'Todos', label: 'Todos' },
+              { value: 'Portal', label: 'Portal cliente' },
+              { value: 'Admin', label: 'Admin' },
+            ].map((op) => (
+              <button
+                key={op.value}
+                className={`btn btn-sm ${origenFiltro === op.value ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setOrigenFiltro(op.value)}
+              >
+                {op.label}
               </button>
             ))}
           </div>
@@ -121,6 +144,8 @@ export default function EncargosPage() {
           const activo = o.estado === 'Pendiente' || o.estado === 'En preparación';
           const atrasado = activo && diff < 0;
           const esHoy = activo && diff === 0;
+          const esPortal = (o.origen || 'Admin') === 'Portal';
+          const esPortalPendiente = esPortal && o.estado === 'Pendiente';
 
           const badgeMap = {
             Pendiente: 'badge-warning',
@@ -138,13 +163,21 @@ export default function EncargosPage() {
                   ? '4px solid var(--danger)'
                   : esHoy
                     ? '4px solid var(--warning)'
-                    : undefined,
+                    : esPortalPendiente
+                      ? '4px solid var(--primary)'
+                      : undefined,
+                borderColor: esPortalPendiente ? 'var(--primary-border)' : undefined,
+                backgroundColor: esPortalPendiente ? 'var(--primary-soft)' : undefined,
               }}
             >
               <div className="card-header">
                 <div className="flex-center" style={{ flexWrap: 'wrap' }}>
                   <span className="fw-bold">Encargo #{o.id}</span>
                   <span className={`badge ${badgeMap[o.estado]}`}>{o.estado}</span>
+                  <span className={`badge ${esPortal ? 'badge-primary' : 'badge-neutral'}`}>
+                    {esPortal && <Store size={11} />}
+                    {esPortal ? 'Portal cliente' : 'Admin'}
+                  </span>
                   {atrasado && (
                     <span className="badge badge-danger">
                       <AlertTriangle size={11} /> Entrega atrasada ({Math.abs(diff)}d)

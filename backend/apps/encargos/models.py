@@ -10,6 +10,10 @@ class Encargo(models.Model):
         ENTREGADO = 'Entregado', 'Entregado'
         CANCELADO = 'Cancelado', 'Cancelado'
 
+    class Origen(models.TextChoices):
+        ADMIN = 'Admin', 'Admin'
+        PORTAL = 'Portal', 'Portal'
+
     cliente_nombre = models.CharField(max_length=120)
     cliente_telefono = models.CharField(max_length=30)
     cliente = models.ForeignKey(
@@ -20,6 +24,7 @@ class Encargo(models.Model):
     estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.PENDIENTE)
     notas = models.TextField(blank=True, default='')
     creado_en = models.DateTimeField(default=timezone.now)
+    origen = models.CharField(max_length=10, choices=Origen.choices, default=Origen.ADMIN)
 
     objects = models.Manager()
 

@@ -28,10 +28,15 @@ class RegistroClienteSerializer(serializers.Serializer):
 
 class EncargoClienteSerializer(serializers.ModelSerializer):
     items = serializers.SerializerMethodField()
+    historial = serializers.SerializerMethodField()
 
     class Meta:
         model = Encargo
-        fields = ['id', 'fecha_entrega', 'hora_entrega', 'estado', 'notas', 'creado_en', 'items']
+        fields = ['id', 'fecha_entrega', 'hora_entrega', 'estado', 'notas', 'creado_en', 'items', 'historial']
+
+    def get_historial(self, obj):
+        # Solo fecha y estado: el motivo puede ser interno y no se expone al cliente.
+        return [{'fecha': h.fecha, 'estado': h.estado} for h in obj.historial.all()]
 
     def get_items(self, obj):
         return [

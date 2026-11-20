@@ -300,6 +300,7 @@ class NuevoEncargoClienteView(APIView):
             fecha_entrega=fecha,
             hora_entrega=hora,
             notas=notas,
+            origen=Encargo.Origen.PORTAL,
         )
 
         for pid, cant in pedido.items():

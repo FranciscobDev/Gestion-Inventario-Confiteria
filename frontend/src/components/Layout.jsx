@@ -36,6 +36,7 @@ export default function Layout() {
     pendingSyncCount,
     toggleOnline,
     globalAlerts,
+    orders,
     isBackupStale,
     createBackupNow,
     toasts,
@@ -56,6 +57,10 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  const portalPendingCount = orders.filter(
+    (o) => o.origen === 'Portal' && o.estado === 'Pendiente'
+  ).length;
+
   const navItems = [
     { section: 'Operación Diaria' },
     { to: '/admin-panel', label: 'Panel de Inicio', icon: LayoutDashboard, end: true },
@@ -65,6 +70,7 @@ export default function Layout() {
       to: '/admin-panel/encargos',
       label: 'Encargos y Reservas',
       icon: CalendarClock,
+      portalBadge: portalPendingCount > 0 ? portalPendingCount : null,
       badge: globalAlerts.urgentOrdersCount > 0 ? globalAlerts.urgentOrdersCount : null,
       alert: true,
     },
@@ -123,8 +129,17 @@ export default function Layout() {
                   <item.icon size={17} />
                   <span>{item.label}</span>
                 </span>
-                {item.badge && (
-                  <span className={`nav-badge ${item.alert ? 'alert' : ''}`}>{item.badge}</span>
+                {(item.portalBadge || item.badge) && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {item.portalBadge && (
+                      <span className="nav-badge" title="Pedidos del portal pendientes">
+                        {item.portalBadge}
+                      </span>
+                    )}
+                    {item.badge && (
+                      <span className={`nav-badge ${item.alert ? 'alert' : ''}`}>{item.badge}</span>
+                    )}
+                  </span>
                 )}
               </NavLink>
             )

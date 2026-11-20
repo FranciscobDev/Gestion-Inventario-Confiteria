@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   INITIAL_CATEGORIES,
   INITIAL_PROVIDERS,
@@ -12,7 +12,7 @@ import {
   INITIAL_PURCHASE_ORDERS,
   INITIAL_BACKUPS,
 } from '../data/mockData';
-import { api, getStoredToken, setStoredToken, mapBootstrapData } from '../services/api';
+import { api, getStoredToken, setStoredToken, mapBootstrapData, mapOrder } from '../services/api';
 import { setClienteSesion } from '../clientes/clienteApi';
 
 const AppContext = createContext(null);
@@ -173,6 +173,39 @@ export function AppProvider({ children }) {
   }, [syncFromBackend]);
 
   const useBackend = backendAvailable && isOnline && Boolean(getStoredToken());
+
+  // Llegada de pedidos nuevos del portal: refresco liviano de `orders` cada 30 s (solo con backend y sesión admin)
+  const ordersRef = useRef(orders);
+  ordersRef.current = orders;
+  useEffect(() => {
+    if (!user || !useBackend) return undefined;
+    let active = true;
+    let knownIds = null; // se llena en el primer sondeo (sin avisos)
+    const poll = async () => {
+      try {
+        const raw = await api.listOrders();
+        if (!active) return;
+        const list = (Array.isArray(raw) ? raw : raw?.results || []).map(mapOrder);
+        const previos = new Set(ordersRef.current.map((o) => o.id));
+        if (knownIds) knownIds.forEach((id) => previos.add(id));
+        if (knownIds) {
+          list
+            .filter((o) => o.origen === 'Portal' && !previos.has(o.id))
+            .forEach((o) => notify(`Nuevo pedido de ${o.clienteNombre}`));
+        }
+        knownIds = new Set(list.map((o) => o.id));
+        if (JSON.stringify(list) !== JSON.stringify(ordersRef.current)) setOrders(list);
+      } catch {
+        // errores de red del sondeo: se ignoran en silencio
+      }
+    };
+    poll();
+    const timer = setInterval(poll, 30000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [user, useBackend, notify]);
 
   // Guardar copia local en localStorage
   useEffect(() => {
